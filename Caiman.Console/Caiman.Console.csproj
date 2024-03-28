@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net8.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Caiman.Core\Caiman.Core.csproj"/>
+        <ProjectReference Include="..\Caiman.CoreDepr\Caiman.CoreDepr.csproj"/>
+        <ProjectReference Include="..\Caiman.Storage\Caiman.Storage.csproj"/>
+    </ItemGroup>
+
+</Project>
