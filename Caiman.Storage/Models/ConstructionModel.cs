@@ -7,7 +7,7 @@ public class ConstructionModel
     public List<NodeModel> Nodes { get; set; } = [];
     public List<ElementModel> Elements { get; set; } = [];
 
-    public static ConstructionModel FromEntity(ConstructionEntity construction)
+    public static ConstructionModel FromEntity(Construction construction)
     {
         var dto = new ConstructionModel
         {
@@ -21,17 +21,17 @@ public class ConstructionModel
         return dto;
     }
 
-    public ConstructionEntity ToEntity(ConstructionBuilder builder)
+    public Construction ToEntity(ConstructionBuilder builder)
     {
-        List<NodeEntity> nodes = Nodes.Select(n => new NodeEntity(n.X, n.Y)).ToList();
-        foreach (NodeEntity node in nodes)
+        List<Node> nodes = Nodes.Select(n => new Node(n.X, n.Y)).ToList();
+        foreach (Node node in nodes)
         {
             builder.AddNode(node);
         }
 
-        IEnumerable<ElementEntity> elements = Elements.Select(el =>
-            new ElementEntity(nodes[el.StartNodeIndex], nodes[el.EndNodeIndex], el.Elasticity, el.Area));
-        foreach (ElementEntity element in elements)
+        IEnumerable<Element> elements = Elements.Select(el =>
+            new Element(nodes[el.StartNodeIndex], nodes[el.EndNodeIndex], el.Elasticity, el.Area));
+        foreach (Element element in elements)
         {
             builder.AddElement(element);
         }

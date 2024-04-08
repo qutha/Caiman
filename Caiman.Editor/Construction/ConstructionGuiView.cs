@@ -22,13 +22,13 @@ public class ConstructionGuiView : IGuiRender
 
         if (ImGui.BeginTabBar("Tabs"))
         {
-            if (ImGui.BeginTabItem("NodeEntity"))
+            if (ImGui.BeginTabItem("Node"))
             {
                 RenderNodeMenu();
                 ImGui.EndTabItem();
             }
 
-            if (ImGui.BeginTabItem("ElementEntity"))
+            if (ImGui.BeginTabItem("Element"))
             {
                 RenderElementMenu();
                 ImGui.EndTabItem();
@@ -110,13 +110,13 @@ public class ConstructionGuiView : IGuiRender
     {
         ImGui.InputFloat("X", ref _nodeMenuState.X);
         ImGui.InputFloat("Y", ref _nodeMenuState.Y);
-        if (ImGui.Button("Add NodeEntity"))
+        if (ImGui.Button("Add Node"))
         {
             AddNode?.Invoke(new Vector2(_nodeMenuState.X, _nodeMenuState.Y));
         }
 
         ImGui.InputInt("Id", ref _nodeMenuState.Id);
-        if (ImGui.Button("Remove NodeEntity"))
+        if (ImGui.Button("Remove Node"))
         {
             if (_nodeMenuState.Id < 0 || _nodeMenuState.Id >= _constructionModel.Nodes.Count)
             {
@@ -130,8 +130,8 @@ public class ConstructionGuiView : IGuiRender
 
     private void RenderElementMenu()
     {
-        ImGui.InputInt("Start NodeEntity Id", ref _elementMenuState.StartNodeId);
-        ImGui.InputInt("End NodeEntity Id", ref _elementMenuState.EndNodeId);
+        ImGui.InputInt("Start Node Id", ref _elementMenuState.StartNodeId);
+        ImGui.InputInt("End Node Id", ref _elementMenuState.EndNodeId);
         ImGui.InputDouble("Elasticity", ref _elementMenuState.Elasticity, 10, 400);
         ImGui.InputDouble("Area", ref _elementMenuState.Area, 0.1, 10);
         if (ImGui.Button("Add element"))
@@ -142,7 +142,7 @@ public class ConstructionGuiView : IGuiRender
         }
 
         ImGui.InputInt("Id", ref _elementMenuState.Id);
-        if (ImGui.Button("Remove ElementEntity"))
+        if (ImGui.Button("Remove Element"))
         {
             RemoveElement?.Invoke(_elementMenuState.Id);
         }
@@ -150,7 +150,7 @@ public class ConstructionGuiView : IGuiRender
 
     private void RenderConstraintMenu()
     {
-        ImGui.InputInt("Start NodeEntity Id", ref _constraintMenuState.NodeId);
+        ImGui.InputInt("Start Node Id", ref _constraintMenuState.NodeId);
         ImGui.Checkbox("X", ref _constraintMenuState.X);
         ImGui.Checkbox("Y", ref _constraintMenuState.Y);
         if (ImGui.Button("Add Constraint"))
@@ -158,7 +158,7 @@ public class ConstructionGuiView : IGuiRender
             AddConstraint?.Invoke(_constraintMenuState.NodeId, _constraintMenuState.X, _constraintMenuState.Y);
         }
 
-        ImGui.InputInt("NodeEntity Id", ref _constraintMenuState.NodeId);
+        ImGui.InputInt("Node Id", ref _constraintMenuState.NodeId);
         if (ImGui.Button("Remove Constraint"))
         {
             RemoveConstraint?.Invoke(_constraintMenuState.NodeId);
@@ -169,7 +169,7 @@ public class ConstructionGuiView : IGuiRender
     {
         ImGui.InputFloat("X", ref _loadMenuState.X, 0, 100);
         ImGui.InputFloat("Y", ref _loadMenuState.Y, 0, 100);
-        ImGui.InputInt("NodeEntity Id", ref _loadMenuState.NodeId);
+        ImGui.InputInt("Node Id", ref _loadMenuState.NodeId);
         if (ImGui.Button("Add Load"))
         {
             AddLoad?.Invoke(_loadMenuState.NodeId, new Vector2(_loadMenuState.X, _loadMenuState.Y));

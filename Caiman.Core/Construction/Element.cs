@@ -1,10 +1,10 @@
 namespace Caiman.Core.Construction;
 
-public class ElementEntity(NodeEntity startNodeEntity, NodeEntity endNodeEntity, double elasticity, double area)
+public class Element(Node startNode, Node endNode, double elasticity, double area)
 {
-    public NodeEntity StartNodeEntity { get; set; } = startNodeEntity;
+    public Node StartNode { get; set; } = startNode;
 
-    public NodeEntity EndNodeEntity { get; set; } = endNodeEntity;
+    public Node EndNode { get; set; } = endNode;
 
     /// <summary>
     ///     Модуль упругости, в кг/см^2
@@ -18,9 +18,9 @@ public class ElementEntity(NodeEntity startNodeEntity, NodeEntity endNodeEntity,
 
     public double Stiffness => Elasticity * Area / Length;
 
-    public double Dx => EndNodeEntity.X - StartNodeEntity.X;
+    public double Dx => EndNode.X - StartNode.X;
 
-    public double Dy => EndNodeEntity.Y - StartNodeEntity.Y;
+    public double Dy => EndNode.Y - StartNode.Y;
 
     public double Length => Math.Sqrt(Dx * Dx + Dy * Dy);
 
@@ -29,5 +29,5 @@ public class ElementEntity(NodeEntity startNodeEntity, NodeEntity endNodeEntity,
     public double Cos => Dx / Length;
 
     // public override string ToString() =>
-    //     $"ElementEntity:\n\tId: {Id}, Start NodeEntity: {StartNodeEntity.Id}, End NodeEntity: {EndNodeEntity.Id}, Elasticity: {Elasticity}, Area: {Area}";
+    //     $"Element:\n\tId: {Id}, Start Node: {StartNode.Id}, End Node: {EndNode.Id}, Elasticity: {Elasticity}, Area: {Area}";
 }

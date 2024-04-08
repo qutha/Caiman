@@ -1,6 +1,6 @@
 namespace Caiman.Core.Construction;
 
-public class NodeEntity(double x, double y)
+public class Node(double x, double y)
 {
     public List<ConcentratedLoad> LoadList { get; set; } = [];
     public Constraint? Constraint { get; set; }
@@ -16,6 +16,6 @@ public class NodeEntity(double x, double y)
     public double Y { get; set; } = y;
 
     // public override string ToString() => Constraint is null
-    //     ? $"NodeEntity:\n\tId: {Id}, Position: {Position}"
-    //     : $"NodeEntity:\n\tId: {Id}, Position: {Position} with ({Constraint.X}:{Constraint.Y}) constraint";
+    //     ? $"Node:\n\tId: {Id}, Position: {Position}"
+    //     : $"Node:\n\tId: {Id}, Position: {Position} with ({Constraint.X}:{Constraint.Y}) constraint";
 }

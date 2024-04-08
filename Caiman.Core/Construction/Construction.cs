@@ -2,20 +2,20 @@ using Caiman.Core.Construction.Exceptions;
 
 namespace Caiman.Core.Construction;
 
-public class ConstructionEntity
+public class Construction
 {
-    public List<NodeEntity> Nodes { get; set; } = [];
-    public List<ElementEntity> Elements { get; set; } = [];
+    public List<Node> Nodes { get; set; } = [];
+    public List<Element> Elements { get; set; } = [];
 
-    public (NodeIndex StartIndex, NodeIndex EndIndex) GetNodesIndicesFromElement(ElementEntity elementEntity)
+    public (NodeIndex StartIndex, NodeIndex EndIndex) GetNodesIndicesFromElement(Element element)
     {
-        NodeIndex startIndex = Nodes.IndexOf(elementEntity.StartNodeEntity);
-        NodeIndex endIndex = Nodes.IndexOf(elementEntity.EndNodeEntity);
+        NodeIndex startIndex = Nodes.IndexOf(element.StartNode);
+        NodeIndex endIndex = Nodes.IndexOf(element.EndNode);
         return (startIndex, endIndex);
     }
 
-    public NodeIndex IndexOf(NodeEntity nodeEntity) => Nodes.IndexOf(nodeEntity);
-    public ElementIndex IndexOf(ElementEntity elementEntity) => Elements.IndexOf(elementEntity);
+    public NodeIndex IndexOf(Node node) => Nodes.IndexOf(node);
+    public ElementIndex IndexOf(Element element) => Elements.IndexOf(element);
 
     /// <summary>
     ///     Получение элемента по индексу
@@ -23,7 +23,7 @@ public class ConstructionEntity
     /// <param name="index">Индекс элемента</param>
     /// <returns>Найденный элемент</returns>
     /// <exception cref="ElementNotFoundException">Элемент не найден</exception>
-    public ElementEntity GetElement(ElementIndex index)
+    public Element GetElement(ElementIndex index)
     {
         if (index >= Elements.Count || index < 0)
         {
@@ -39,7 +39,7 @@ public class ConstructionEntity
     /// <param name="index">Индекс узла</param>
     /// <returns>Найденный узел</returns>
     /// <exception cref="NodeNotFoundException">Узел не найден</exception>
-    public NodeEntity GetNode(NodeIndex index)
+    public Node GetNode(NodeIndex index)
     {
         if (index >= Nodes.Count || index < 0)
         {

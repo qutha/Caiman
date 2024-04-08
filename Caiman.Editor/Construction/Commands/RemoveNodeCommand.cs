@@ -15,7 +15,7 @@ public class RemoveNodeCommand : ICommand
         _nodeId = nodeId;
     }
 
-    public string Name => "Remove NodeEntity";
+    public string Name => "Remove Node";
 
     public void Execute() => _deletedNode = _constructionModel.RemoveNode(_nodeId);
 

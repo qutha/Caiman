@@ -6,6 +6,6 @@ public class AreaRestriction(ElementIndex elementIndex, double minArea) : Optimi
 {
     protected override double GetValue(IList<double> areas) => minArea - areas[elementIndex];
 
-    public static IList<AreaRestriction> CreateRestrictionForAll(ConstructionEntity construction, double minArea) =>
+    public static IList<AreaRestriction> CreateRestrictionForAll(Construction.Construction construction, double minArea) =>
         construction.Elements.Select((_, i) => new AreaRestriction(i, minArea)).ToArray();
 }

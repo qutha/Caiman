@@ -10,12 +10,12 @@ public class ElementModel
     public double Elasticity { get; set; }
     public double Area { get; set; }
 
-    public static ElementModel FromModel(ConstructionEntity construction, ElementEntity elementEntity) =>
+    public static ElementModel FromModel(Construction construction, Element element) =>
         new()
         {
-            StartNodeIndex = construction.Nodes.IndexOf(elementEntity.StartNodeEntity),
-            EndNodeIndex = construction.Nodes.IndexOf(elementEntity.EndNodeEntity),
-            Elasticity = elementEntity.Elasticity,
-            Area = elementEntity.Area,
+            StartNodeIndex = construction.Nodes.IndexOf(element.StartNode),
+            EndNodeIndex = construction.Nodes.IndexOf(element.EndNode),
+            Elasticity = element.Elasticity,
+            Area = element.Area,
         };
 }

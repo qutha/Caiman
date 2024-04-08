@@ -1,6 +1,7 @@
 using Caiman.Core.Analysis;
 using Caiman.Core.Construction;
 using Caiman.Core.Optimization.Restrictions;
+
 using MathNet.Numerics.LinearAlgebra;
 
 namespace Caiman.Core.Optimization;
@@ -11,8 +12,15 @@ public class ConstructionOptimizer(
 {
     private const double NormativeStepFactor = 0.2;
 
-    public IList<double> Optimize(ConstructionEntity construction, IList<OptimizationRestriction> restrictions,
-        OptimizationOptions options)
+    private enum PointState
+    {
+        Inside,
+        Outside,
+        OnBoundary,
+    }
+
+    public IList<double> Optimize(Construction.Construction construction, IList<OptimizationRestriction> restrictions,
+            OptimizationOptions options)
     {
         Vector<double> initialAreas = analyzer.GetAreasVector(construction);
         Vector<double> optimizedAreas = analyzer.GetAreasVector(construction);
@@ -22,7 +30,7 @@ public class ConstructionOptimizer(
         var iteration = 0;
         while (true)
         {
-            foreach (var optimizationRestriction in restrictions)
+            foreach (OptimizationRestriction optimizationRestriction in restrictions)
             {
                 optimizationRestriction.UpdateRestriction(optimizedAreas);
             }
@@ -31,7 +39,7 @@ public class ConstructionOptimizer(
                     IList<OptimizationRestriction> violatedRestrictions) =
                 SortRestrictions(restrictions);
 
-            var pointState = GetPointState(activeRestrictions, violatedRestrictions);
+            PointState pointState = GetPointState(activeRestrictions, violatedRestrictions);
 
             if (pointState == PointState.Outside)
             {
@@ -40,7 +48,6 @@ public class ConstructionOptimizer(
             }
 
             Vector<double> targetAntiGradient = gradientFinder.FindAntiGradient(targetFunc, optimizedAreas);
-
 
             Vector<double> direction = pointState switch
             {
@@ -51,7 +58,7 @@ public class ConstructionOptimizer(
             };
 
             var directionLength = direction.L2Norm();
-            if (directionLength == 0)
+            if (directionLength < Constants.Epsilon)
             {
                 break;
             }
@@ -61,28 +68,12 @@ public class ConstructionOptimizer(
             var step = GetStep(normDirection, optimizedAreas, passiveRestrictions);
             if (options.UsePrecision && options.CheckPrecision(step))
             {
-                // if (options.UseCorrectRestrictions)
-                // {
-                //     if (violatedRestrictions.Count > 0)
-                //     {
-                //         continue;
-                //     }
-                // }
-
                 break;
             }
 
             optimizedAreas += step * normDirection;
             if (options.UseMaxIterations && options.CheckIterations(iteration))
             {
-                // if (options.UseCorrectRestrictions)
-                // {
-                //     if (violatedRestrictions.Count > 0)
-                //     {
-                //         continue;
-                //     }
-                // }
-
                 break;
             }
 
@@ -91,14 +82,6 @@ public class ConstructionOptimizer(
                 initialValue;
             if (options.UseEfficiencyPerStep && options.CheckEfficiencyPerStep(currentEfficiency))
             {
-                // if (options.UseCorrectRestrictions)
-                // {
-                //     if (violatedRestrictions.Count > 0)
-                //     {
-                //         continue;
-                //     }
-                // }
-
                 break;
             }
 
@@ -111,16 +94,22 @@ public class ConstructionOptimizer(
         return optimizedAreas;
     }
 
-    private (
-        IList<OptimizationRestriction> ActiveRestrictions,
-        IList<OptimizationRestriction> PassiveRestrictions,
-        IList<OptimizationRestriction> ViolatedRestrictions) SortRestrictions(
-            IList<OptimizationRestriction> restrictions)
+    private PointState GetPointState(IEnumerable<OptimizationRestriction> activeRestrictions,
+        IEnumerable<OptimizationRestriction> violatedRestrictions)
     {
-        IList<OptimizationRestriction> active = restrictions.Where(r => r.Type is RestrictionType.Active).ToList();
-        IList<OptimizationRestriction> passive = restrictions.Where(r => r.Type is RestrictionType.Passive).ToList();
-        IList<OptimizationRestriction> violated = restrictions.Where(r => r.Type is RestrictionType.Violated).ToList();
-        return (active, passive, violated);
+        PointState pointState = activeRestrictions.Count() switch
+        {
+            0 => PointState.Inside,
+            > 0 => PointState.OnBoundary,
+            _ => throw new InvalidOperationException("Point State does not exist"),
+        };
+
+        if (violatedRestrictions.Any())
+        {
+            pointState = PointState.Outside;
+        }
+
+        return pointState;
     }
 
     private double GetStep(Vector<double> directionNorm, Vector<double> areas,
@@ -130,11 +119,10 @@ public class ConstructionOptimizer(
         Vector<double> passiveStep = Vector<double>.Build.Dense(passiveRestrictions.Count);
         for (var i = 0; i < passiveRestrictions.Count; i++)
         {
-            var passiveRestriction = passiveRestrictions[i];
+            OptimizationRestriction passiveRestriction = passiveRestrictions[i];
             passiveStep[i] = -passiveRestriction.Value / gradientFinder
                 .FindGradient(passiveRestriction.GetRestrictionFunc(), areas).DotProduct(directionNorm);
         }
-
 
         var stepsCount = passiveStep.Count(d => d > 0);
         if (stepsCount == 0)
@@ -147,30 +135,16 @@ public class ConstructionOptimizer(
         return step;
     }
 
-    private PointState GetPointState(IEnumerable<OptimizationRestriction> activeRestrictions,
-        IEnumerable<OptimizationRestriction> violatedRestrictions)
+    private (
+        IList<OptimizationRestriction> ActiveRestrictions,
+        IList<OptimizationRestriction> PassiveRestrictions,
+        IList<OptimizationRestriction> ViolatedRestrictions) SortRestrictions(
+            IList<OptimizationRestriction> restrictions)
     {
-        var pointState = activeRestrictions.Count() switch
-        {
-            0 => PointState.Inside,
-            > 0 => PointState.OnBoundary,
-            _ => throw new Exception("Point State does not exist"),
-        };
-
-        if (violatedRestrictions.Any())
-        {
-            pointState = PointState.Outside;
-        }
-
-        return pointState;
-    }
-
-
-    private enum PointState
-    {
-        Inside,
-        Outside,
-        OnBoundary,
+        IList<OptimizationRestriction> active = restrictions.Where(r => r.Type is RestrictionType.Active).ToList();
+        IList<OptimizationRestriction> passive = restrictions.Where(r => r.Type is RestrictionType.Passive).ToList();
+        IList<OptimizationRestriction> violated = restrictions.Where(r => r.Type is RestrictionType.Violated).ToList();
+        return (active, passive, violated);
     }
 
     #region Direction Correct
@@ -187,7 +161,7 @@ public class ConstructionOptimizer(
                 gradientFinder.FindAntiGradient(activeRestrictions[0].GetRestrictionFunc(), areas);
             var lambda = -restrictionAntiGradient.DotProduct(targetAntiGradient) /
                 restrictionAntiGradient.DotProduct(restrictionAntiGradient);
-            direction = targetAntiGradient + restrictionAntiGradient * lambda;
+            direction = targetAntiGradient + (restrictionAntiGradient * lambda);
             return direction;
         }
 
@@ -200,7 +174,7 @@ public class ConstructionOptimizer(
             multipliers = FindLagrangeMultipliersForActiveRestrictions(targetAntiGradient, restrictionsAntiGradients);
         }
 
-        direction = restrictionsAntiGradients * multipliers + targetAntiGradient;
+        direction = (restrictionsAntiGradients * multipliers) + targetAntiGradient;
         return direction;
     }
 
@@ -236,7 +210,7 @@ public class ConstructionOptimizer(
         {
             Vector<double> gradient =
                 gradientFinder.FindAntiGradient(activeRestrictions[i].GetRestrictionFunc(), areas);
-            foreach (var (row, _) in restrictionsAntiGradients.EnumerateRowsIndexed())
+            foreach ((var row, Vector<double> _) in restrictionsAntiGradients.EnumerateRowsIndexed())
             {
                 restrictionsAntiGradients[row, i] = gradient[row];
             }
@@ -254,16 +228,14 @@ public class ConstructionOptimizer(
         for (var i = 0; i < violatedRestrictions.Count; i++)
         {
             Vector<double> gradient = gradientFinder.FindGradient(violatedRestrictions[i].GetRestrictionFunc(), areas);
-            foreach (var (row, _) in restrictionsGradient.EnumerateRowsIndexed())
+            foreach ((var row, Vector<double> _) in restrictionsGradient.EnumerateRowsIndexed())
             {
                 restrictionsGradient[row, i] = gradient[row];
             }
         }
 
-
         return restrictionsGradient;
     }
-
 
     #region Lagrange Multipliers
 

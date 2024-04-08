@@ -12,6 +12,6 @@ public class Node(Vector2 position)
     public Vector2 Position { get; set; } = position;
 
     public override string ToString() => Constraint is null
-        ? $"NodeEntity:\n\tId: {Id}, Position: {Position}"
-        : $"NodeEntity:\n\tId: {Id}, Position: {Position} with ({Constraint.X}:{Constraint.Y}) constraint";
+        ? $"Node:\n\tId: {Id}, Position: {Position}"
+        : $"Node:\n\tId: {Id}, Position: {Position} with ({Constraint.X}:{Constraint.Y}) constraint";
 }

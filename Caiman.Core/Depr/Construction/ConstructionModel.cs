@@ -1,31 +1,39 @@
 using System.Diagnostics;
 using System.Numerics;
+
 using Caiman.Core.Depr.Construction.Exceptions;
 
 namespace Caiman.Core.Depr.Construction;
 
 public class ConstructionModel : IConstructionModel
 {
-    // TODO переместить в Editor
-    public List<Node> Nodes { get; set; } = [];
     public List<Element> Elements { get; set; } = [];
 
-    private int RemoveElements(Node node) =>
-        Elements.RemoveAll(element => element.StartNode == node || element.EndNode == node);
+    // TODO переместить в Editor
+    public List<Node> Nodes { get; set; } = [];
 
-    private void NumberElements()
+    public void AddConstraint(int nodeId, bool x, bool y)
     {
-        foreach (Element element in Elements)
+        Node? node = Nodes.Find(n => n.Id == nodeId) ?? throw new NodeNotFoundException();
+        if (node.Constraint is not null)
         {
-            element.Id = Elements.IndexOf(element);
+            throw new ConstraintAlreadyExistsException();
         }
+
+        if (!x && !y)
+        {
+            throw new EmptyConstraintException();
+        }
+
+        node.Constraint = new Constraint(x, y);
     }
 
-    private void NumberNodes()
+    public void AddDeletedElement(Element element, bool wasInNode = false)
     {
-        foreach (Node node in Nodes)
+        Elements.Insert(element.Id, element);
+        if (!wasInNode)
         {
-            node.Id = Nodes.IndexOf(node);
+            NumberElements();
         }
     }
 
@@ -43,46 +51,6 @@ public class ConstructionModel : IConstructionModel
         }
 
         NumberNodes();
-    }
-
-    public int AddNode(Vector2 position)
-    {
-        Node? node = Nodes.FirstOrDefault(node =>
-            Math.Abs(node.Position.X - position.X) < Constants.Epsilon &&
-            Math.Abs(node.Position.Y - position.Y) < Constants.Epsilon);
-        if (node is not null)
-        {
-            throw new NodeAlreadyExistsException();
-        }
-
-        var newNode = new Node(position);
-        Nodes.Add(
-            newNode
-        );
-        NumberNodes();
-        return newNode.Id;
-    }
-
-    public Node RemoveNode(int nodeId)
-    {
-        // TODO переделать на FirstOrDefault
-        try
-        {
-            Node node = Nodes[nodeId];
-            Nodes.Remove(node);
-            int removedElements = RemoveElements(node);
-            if (removedElements > 0)
-            {
-                NumberElements();
-            }
-
-            NumberNodes();
-            return node;
-        }
-        catch (IndexOutOfRangeException)
-        {
-            throw new NodeNotFoundException();
-        }
     }
 
     public int AddElement(int startNodeId, int endNodeId, double elasticity, double area)
@@ -104,13 +72,13 @@ public class ConstructionModel : IConstructionModel
         Node startNode = Nodes[startNodeId];
         Node endNode = Nodes[endNodeId];
 
-        Element? element = Elements.FirstOrDefault(el =>
+        Element? element = Elements.Find(el =>
             (el.StartNode.Id == startNode.Id || el.StartNode.Id == endNode.Id) && (el.EndNode.Id == startNode.Id ||
                 el.EndNode.Id == endNode.Id)
         );
         if (element is not null)
         {
-            Debug.WriteLine("ElementEntity already exists");
+            Debug.WriteLine("Element already exists");
             throw new ElementAlreadyExistsException();
         }
 
@@ -129,62 +97,33 @@ public class ConstructionModel : IConstructionModel
         return newElement.Id;
     }
 
-    public Element RemoveElement(int elementId)
+    public void AddLoad(int nodeId, Vector2 value)
     {
-        // TODO переделать на FirstOrDefault
-        try
-        {
-            Element element = Elements[elementId];
-            Elements.Remove(element);
-            element.StartNode.Elements.Remove(element);
-            element.EndNode.Elements.Remove(element);
-            NumberElements();
-            return element;
-        }
-        catch (ArgumentOutOfRangeException)
-        {
-            throw new ElementNotFoundException();
-        }
+        Node? node = Nodes.Find(n => n.Id == nodeId) ?? throw new NodeNotFoundException();
+        node.Loads.Add(new ConcentratedLoad(value));
     }
 
-    public void AddDeletedElement(Element element, bool wasInNode = false)
+    public int AddNode(Vector2 position)
     {
-        Elements.Insert(element.Id, element);
-        if (!wasInNode)
+        Node? node = Nodes.Find(node =>
+            Math.Abs(node.Position.X - position.X) < Constants.Epsilon &&
+            Math.Abs(node.Position.Y - position.Y) < Constants.Epsilon);
+        if (node is not null)
         {
-            NumberElements();
-        }
-    }
-
-    public void AddConstraint(int nodeId, bool x, bool y)
-    {
-        Node? node = Nodes.FirstOrDefault(n => n.Id == nodeId);
-        if (node is null)
-        {
-            throw new NodeNotFoundException();
+            throw new NodeAlreadyExistsException();
         }
 
-        if (node.Constraint is not null)
-        {
-            throw new ConstraintAlreadyExistsException();
-        }
-
-        if (x == false && y == false)
-        {
-            throw new EmptyConstraintException();
-        }
-
-        node.Constraint = new Constraint(x, y);
+        var newNode = new Node(position);
+        Nodes.Add(
+            newNode
+        );
+        NumberNodes();
+        return newNode.Id;
     }
 
     public Constraint RemoveConstraint(int nodeId)
     {
-        Node? node = Nodes.FirstOrDefault(n => n.Id == nodeId);
-        if (node is null)
-        {
-            throw new NodeNotFoundException();
-        }
-
+        Node? node = Nodes.Find(n => n.Id == nodeId) ?? throw new NodeNotFoundException();
         if (node.Constraint is null)
         {
             throw new ConstraintNotFoundException();
@@ -195,31 +134,68 @@ public class ConstructionModel : IConstructionModel
         return constraint;
     }
 
-    public void AddLoad(int nodeId, Vector2 value)
+    public Element RemoveElement(int elementId)
     {
-        Node? node = Nodes.FirstOrDefault(n => n.Id == nodeId);
-        if (node is null)
+        // TODO переделать на FirstOrDefault
+        try
         {
-            throw new NodeNotFoundException();
+            Element element = Elements[elementId];
+            _ = Elements.Remove(element);
+            _ = element.StartNode.Elements.Remove(element);
+            _ = element.EndNode.Elements.Remove(element);
+            NumberElements();
+            return element;
         }
-
-        node.Loads.Add(new ConcentratedLoad(value));
+        catch (ArgumentOutOfRangeException)
+        {
+            throw new ElementNotFoundException();
+        }
     }
 
     public void RemoveLoad(int nodeId, Vector2 value)
     {
-        Node? node = Nodes.FirstOrDefault(n => n.Id == nodeId);
-        if (node is null)
+        Node? node = Nodes.Find(n => n.Id == nodeId) ?? throw new NodeNotFoundException();
+        ConcentratedLoad? load = node.Loads.Find(c => c.Value == value) ?? throw new LoadNotFoundException();
+        _ = node.Loads.Remove(load);
+    }
+
+    public Node RemoveNode(int nodeId)
+    {
+        // TODO переделать на FirstOrDefault
+        try
+        {
+            Node node = Nodes[nodeId];
+            _ = Nodes.Remove(node);
+            var removedElements = RemoveElements(node);
+            if (removedElements > 0)
+            {
+                NumberElements();
+            }
+
+            NumberNodes();
+            return node;
+        }
+        catch (IndexOutOfRangeException)
         {
             throw new NodeNotFoundException();
         }
-
-        ConcentratedLoad? load = node.Loads.FirstOrDefault(c => c.Value == value);
-        if (load is null)
-        {
-            throw new LoadNotFoundException();
-        }
-
-        node.Loads.Remove(load);
     }
+
+    private void NumberElements()
+    {
+        foreach (Element element in Elements)
+        {
+            element.Id = Elements.IndexOf(element);
+        }
+    }
+
+    private void NumberNodes()
+    {
+        foreach (Node node in Nodes)
+        {
+            node.Id = Nodes.IndexOf(node);
+        }
+    }
+
+    private int RemoveElements(Node node) => Elements.RemoveAll(element => element.StartNode == node || element.EndNode == node);
 }

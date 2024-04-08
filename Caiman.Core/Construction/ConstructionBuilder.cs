@@ -4,37 +4,37 @@ namespace Caiman.Core.Construction;
 
 public class ConstructionBuilder
 {
-    private readonly ConstructionEntity _construction = new();
+    private readonly Construction _construction = new();
 
-    public ConstructionBuilder AddNode(NodeEntity nodeEntity)
+    public ConstructionBuilder AddNode(Node node)
     {
-        _construction.Nodes.Add(nodeEntity);
+        _construction.Nodes.Add(node);
 
         return this;
     }
 
-    public ConstructionBuilder AddElement(ElementEntity elementEntity)
+    public ConstructionBuilder AddElement(Element element)
     {
-        NodeEntity? startNode = _construction.Nodes.FirstOrDefault(n =>
-            Math.Abs(n.X - elementEntity.StartNodeEntity.X) < Constants.Epsilon &&
-            Math.Abs(n.Y - elementEntity.StartNodeEntity.Y) < Constants.Epsilon);
-        NodeEntity? endNode = _construction.Nodes.FirstOrDefault(n =>
-            Math.Abs(n.X - elementEntity.EndNodeEntity.X) < Constants.Epsilon &&
-            Math.Abs(n.Y - elementEntity.EndNodeEntity.Y) < Constants.Epsilon);
+        Node? startNode = _construction.Nodes.FirstOrDefault(n =>
+            Math.Abs(n.X - element.StartNode.X) < Constants.Epsilon &&
+            Math.Abs(n.Y - element.StartNode.Y) < Constants.Epsilon);
+        Node? endNode = _construction.Nodes.FirstOrDefault(n =>
+            Math.Abs(n.X - element.EndNode.X) < Constants.Epsilon &&
+            Math.Abs(n.Y - element.EndNode.Y) < Constants.Epsilon);
         if (startNode is null || endNode is null)
         {
             throw new NodeNotFoundException();
         }
 
-        _construction.Elements.Add(elementEntity);
+        _construction.Elements.Add(element);
         return this;
     }
 
 
-    public ConstructionBuilder AddLoad(NodeEntity nodeEntity, ConcentratedLoad load)
+    public ConstructionBuilder AddLoad(Node node, ConcentratedLoad load)
     {
-        NodeEntity? constructionNode = _construction.Nodes.FirstOrDefault(n =>
-            Math.Abs(n.X - nodeEntity.X) < Constants.Epsilon && Math.Abs(n.Y - nodeEntity.Y) < Constants.Epsilon);
+        Node? constructionNode = _construction.Nodes.FirstOrDefault(n =>
+            Math.Abs(n.X - node.X) < Constants.Epsilon && Math.Abs(n.Y - node.Y) < Constants.Epsilon);
         if (constructionNode is null)
         {
             throw new NodeNotFoundException();
@@ -44,10 +44,10 @@ public class ConstructionBuilder
         return this;
     }
 
-    public ConstructionBuilder AddConstraint(NodeEntity nodeEntity, Constraint constraint)
+    public ConstructionBuilder AddConstraint(Node node, Constraint constraint)
     {
-        NodeEntity? constructionNode = _construction.Nodes.FirstOrDefault(n =>
-            Math.Abs(n.X - nodeEntity.X) < Constants.Epsilon && Math.Abs(n.Y - nodeEntity.Y) < Constants.Epsilon);
+        Node? constructionNode = _construction.Nodes.FirstOrDefault(n =>
+            Math.Abs(n.X - node.X) < Constants.Epsilon && Math.Abs(n.Y - node.Y) < Constants.Epsilon);
         if (constructionNode is null)
         {
             throw new NodeNotFoundException();
@@ -57,5 +57,5 @@ public class ConstructionBuilder
         return this;
     }
 
-    public ConstructionEntity Build() => _construction;
+    public Construction Build() => _construction;
 }

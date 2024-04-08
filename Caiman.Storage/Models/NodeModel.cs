@@ -11,17 +11,17 @@ public class NodeModel
 
     public double Y { get; set; }
 
-    public static NodeModel FromModel(ConstructionEntity construction, NodeEntity nodeEntity)
+    public static NodeModel FromModel(Construction construction, Node node)
     {
         var dto = new NodeModel
         {
-            NodeIndex = construction.Nodes.IndexOf(nodeEntity),
-            LoadList = nodeEntity.LoadList,
-            Constraint = nodeEntity.Constraint is null
+            NodeIndex = construction.Nodes.IndexOf(node),
+            LoadList = node.LoadList,
+            Constraint = node.Constraint is null
                 ? null
-                : new Constraint(nodeEntity.Constraint.X, nodeEntity.Constraint.Y),
-            X = nodeEntity.X,
-            Y = nodeEntity.Y,
+                : new Constraint(node.Constraint.X, node.Constraint.Y),
+            X = node.X,
+            Y = node.Y,
         };
         return dto;
     }

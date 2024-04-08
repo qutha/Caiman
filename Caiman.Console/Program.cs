@@ -3,6 +3,7 @@ using Caiman.Core.Construction;
 using Caiman.Core.Matrices;
 using Caiman.Core.Optimization;
 using Caiman.Core.Optimization.Restrictions;
+
 using MathNet.Numerics.LinearAlgebra;
 
 {
@@ -10,14 +11,14 @@ using MathNet.Numerics.LinearAlgebra;
     //
     // var elementProperties = new ElementProperties(200, 1);
     //
-    // var node1 = new NodeEntity(0, 0);
-    // var node2 = new NodeEntity(1, 1);
-    // var node3 = new NodeEntity(2, 0);
-    // var node4 = new NodeEntity(3, 3);
+    // var node1 = new Node(0, 0);
+    // var node2 = new Node(1, 1);
+    // var node3 = new Node(2, 0);
+    // var node4 = new Node(3, 3);
     //
-    // var element1 = new ElementEntity(node1, node2, elementProperties);
-    // var element2 = new ElementEntity(node2, node3, elementProperties);
-    // var element3 = new ElementEntity(node3, node1, elementProperties);
+    // var element1 = new Element(node1, node2, elementProperties);
+    // var element2 = new Element(node2, node3, elementProperties);
+    // var element3 = new Element(node3, node1, elementProperties);
     //
     // var force = new ConcentratedLoad(0, -1);
     //
@@ -36,67 +37,65 @@ using MathNet.Numerics.LinearAlgebra;
 
     #region Hide
 
-// var node1 = new NodeEntity(5, 0);
-// var node2 = new NodeEntity(0, 8);
-// var node3 = new NodeEntity(3, 6);
-// var node4 = new NodeEntity(7, 6);
-//
-// var element1 = new ElementEntity(node1, node2, elementProperties);
-// var element2 = new ElementEntity(node2, node3, elementProperties);
-// var element3 = new ElementEntity(node1, node3, elementProperties);
-// var element4 = new ElementEntity(node3, node4, elementProperties);
-// var element5 = new ElementEntity(node1, node4, elementProperties);
-//
-// var force1 = new ConcentratedLoad(0, -2.3);
+    // var node1 = new Node(5, 0);
+    // var node2 = new Node(0, 8);
+    // var node3 = new Node(3, 6);
+    // var node4 = new Node(7, 6);
+    //
+    // var element1 = new Element(node1, node2, elementProperties);
+    // var element2 = new Element(node2, node3, elementProperties);
+    // var element3 = new Element(node1, node3, elementProperties);
+    // var element4 = new Element(node3, node4, elementProperties);
+    // var element5 = new Element(node1, node4, elementProperties);
+    //
+    // var force1 = new ConcentratedLoad(0, -2.3);
 
+    // var system = new RodSystem();
+    // system
+    //     .AddElement(element1)
+    //     .AddElement(element2)
+    //     .AddElement(element3)
+    //     .AddElement(element4)
+    //     .AddElement(element5)
+    //     .AddLoad(force1, node3)
+    //     .AddLoad(force1, node4)
+    //     .AddConstraint(uv, node1)
+    //     .AddConstraint(v, node2)
+    //     .Build();
 
-// var system = new RodSystem();
-// system
-//     .AddElement(element1)
-//     .AddElement(element2)
-//     .AddElement(element3)
-//     .AddElement(element4)
-//     .AddElement(element5)
-//     .AddLoad(force1, node3)
-//     .AddLoad(force1, node4)
-//     .AddConstraint(uv, node1)
-//     .AddConstraint(v, node2)
-//     .Build();
+    // var elementProps = new ElementProperties(200, 1.5);
+    //
+    // var node1 = new Node(0, 0);
+    // var node2 = new Node(2, 4);
+    // var node3 = new Node(7, 7);
+    // var node4 = new Node(12, 4);
+    // var node5 = new Node(14, 0);
+    //
+    // var element1 = new Element(node1, node2, elementProps);
+    // var element2 = new Element(node2, node3, elementProps);
+    // var element3 = new Element(node3, node4, elementProps);
+    // var element4 = new Element(node4, node5, elementProps);
+    // var element5 = new Element(node2, node5, elementProps);
+    // var element6 = new Element(node1, node4, elementProps);
 
-// var elementProps = new ElementProperties(200, 1.5);
-//
-// var node1 = new NodeEntity(0, 0);
-// var node2 = new NodeEntity(2, 4);
-// var node3 = new NodeEntity(7, 7);
-// var node4 = new NodeEntity(12, 4);
-// var node5 = new NodeEntity(14, 0);
-//
-// var element1 = new ElementEntity(node1, node2, elementProps);
-// var element2 = new ElementEntity(node2, node3, elementProps);
-// var element3 = new ElementEntity(node3, node4, elementProps);
-// var element4 = new ElementEntity(node4, node5, elementProps);
-// var element5 = new ElementEntity(node2, node5, elementProps);
-// var element6 = new ElementEntity(node1, node4, elementProps);
+    // var load1 = new ConcentratedLoad(1, 0);
+    // var load2 = new ConcentratedLoad(0, -1);
+    //
+    // var system = new RodSystem();
+    // system
+    //     .AddElement(element1)
+    //     .AddElement(element2)
+    //     .AddElement(element3)
+    //     .AddElement(element4)
+    //     .AddElement(element5)
+    //     .AddElement(element6)
+    //     .AddLoad(load1, node2)
+    //     .AddLoad(load2, node3)
+    //     .AddConstraint(uv, node1)
+    //     .AddConstraint(uv, node5)
+    //     .Build();
 
-
-// var load1 = new ConcentratedLoad(1, 0);
-// var load2 = new ConcentratedLoad(0, -1);
-//
-// var system = new RodSystem();
-// system
-//     .AddElement(element1)
-//     .AddElement(element2)
-//     .AddElement(element3)
-//     .AddElement(element4)
-//     .AddElement(element5)
-//     .AddElement(element6)
-//     .AddLoad(load1, node2)
-//     .AddLoad(load2, node3)
-//     .AddConstraint(uv, node1)
-//     .AddConstraint(uv, node5)
-//     .Build();
-
-    #endregion
+    #endregion Hide
 
     // var localMatrixBuilder = new MatrixBuilder2D();
     // var stiffnessMatrixBuilder = new StiffnessMatrixBuilder2D();
@@ -109,13 +108,13 @@ using MathNet.Numerics.LinearAlgebra;
     // Console.WriteLine(displacementVector);
 }
 {
-    // var wnode1 = new NodeEntity(new Vector2(0, 0)) { Id = 0 };
-    // var wnode2 = new NodeEntity(new Vector2(1, 1)) { Id = 1 };
-    // var wnode3 = new NodeEntity(new Vector2(2, 0)) { Id = 2 };
+    // var wnode1 = new Node(new Vector2(0, 0)) { Id = 0 };
+    // var wnode2 = new Node(new Vector2(1, 1)) { Id = 1 };
+    // var wnode3 = new Node(new Vector2(2, 0)) { Id = 2 };
     //
-    // var welement1 = new ElementEntity(wnode1, wnode2, 200, 1);
-    // var welement2 = new ElementEntity(wnode2, wnode3, 200, 1);
-    // var welement3 = new ElementEntity(wnode3, wnode1, 200, 1);
+    // var welement1 = new Element(wnode1, wnode2, 200, 1);
+    // var welement2 = new Element(wnode2, wnode3, 200, 1);
+    // var welement3 = new Element(wnode3, wnode1, 200, 1);
     //
     // var wforce = new ConcentratedLoad(new Vector2(0, -1));
     //
@@ -150,12 +149,10 @@ using MathNet.Numerics.LinearAlgebra;
     // MathNet.Numerics.LinearAlgebra.Vector<double> gradient = gradientFinder.GetGradient(func, areas);
     // Console.WriteLine(gradient);
 
-
     // Console.WriteLine(func(areas));
     // MathNet.Numerics.LinearAlgebra.Vector<double> vector2 = analyzer.FindDisplacementVector(construction);
     // Console.WriteLine(vector2);
 }
-
 
 // {
 //     Func<double[], double> func = args => Math.Pow(args[0], 2) + 2 * args[1];
@@ -185,27 +182,26 @@ using MathNet.Numerics.LinearAlgebra;
 
 {
     // Мой вариант
-    var node1 = new NodeEntity(0, 700);
-    var node2 = new NodeEntity(1200, 900);
-    var node3 = new NodeEntity(1400, 0);
-    var node4 = new NodeEntity(0, 0);
+    var node1 = new Node(0, 700);
+    var node2 = new Node(1200, 900);
+    var node3 = new Node(1400, 0);
+    var node4 = new Node(0, 0);
 
-    var element1 = new ElementEntity(node1, node2, 2_000_000, 14);
-    var element2 = new ElementEntity(node2, node3, 2_000_000, 14);
-    var element3 = new ElementEntity(node3, node4, 2_000_000, 14);
-    var element4 = new ElementEntity(node4, node1, 2_000_000, 14);
-    var element5 = new ElementEntity(node1, node3, 2_000_000, 14);
-    var element6 = new ElementEntity(node4, node2, 2_000_000, 14);
+    var element1 = new Element(node1, node2, 2_000_000, 14);
+    var element2 = new Element(node2, node3, 2_000_000, 14);
+    var element3 = new Element(node3, node4, 2_000_000, 14);
+    var element4 = new Element(node4, node1, 2_000_000, 14);
+    var element5 = new Element(node1, node3, 2_000_000, 14);
+    var element6 = new Element(node4, node2, 2_000_000, 14);
 
     var load = new ConcentratedLoad(10_000, 0);
 
     var uv = new Constraint(true, true);
     var v = new Constraint(false, true);
 
-
     var constructionBuilder = new ConstructionBuilder();
 
-    var construction = constructionBuilder
+    Construction construction = constructionBuilder
         .AddNode(node1)
         .AddNode(node2)
         .AddNode(node3)
@@ -245,13 +241,28 @@ using MathNet.Numerics.LinearAlgebra;
     Console.WriteLine(internalForces5);
     Console.WriteLine(internalForces6);
 
+    Vector<double> stresses1 = analyzer.FindStresses(construction, element1);
+    Vector<double> stresses2 = analyzer.FindStresses(construction, element2);
+    Vector<double> stresses3 = analyzer.FindStresses(construction, element3);
+    Vector<double> stresses4 = analyzer.FindStresses(construction, element4);
+    Vector<double> stresses5 = analyzer.FindStresses(construction, element5);
+    Vector<double> stresses6 = analyzer.FindStresses(construction, element6);
+
+    Console.WriteLine("Напряжения");
+    Console.WriteLine(stresses1);
+    Console.WriteLine(stresses2);
+    Console.WriteLine(stresses3);
+    Console.WriteLine(stresses4);
+    Console.WriteLine(stresses5);
+    Console.WriteLine(stresses6);
+
     var derivativeFinder = new DerivativeFinder();
     var gradientFinder = new GradientFinder(derivativeFinder);
 
-    Vector<double> antiGradient = gradientFinder.FindAntiGradient(nodeDisplacementFunc, areas);
+    Vector<double> gradient = gradientFinder.FindGradient(nodeDisplacementFunc, areas);
 
-    Console.WriteLine("\nАнтиградиент перемещения узла 2 вдоль оси X");
-    Console.WriteLine(antiGradient);
+    Console.WriteLine("\nГрадиент перемещения узла 2 вдоль оси X");
+    Console.WriteLine(gradient);
 
     var restrictionBuilder = new RestrictionBuilder();
     List<OptimizationRestriction> restrictions = restrictionBuilder
@@ -262,29 +273,29 @@ using MathNet.Numerics.LinearAlgebra;
         .Add(AreaRestriction.CreateRestrictionForAll(construction, 10))
         .Build();
     var optimizer = new ConstructionOptimizer(analyzer, gradientFinder);
-    Console.WriteLine($"Перемещения было {nodeDisplacementFunc(areas)}");
-    Console.WriteLine($"Материалоемкость было {analyzer.GenerateMaterialConsumptionFunction(construction)(areas)}");
+    Console.WriteLine(
+        $"Материалоемкость до оптимизации {analyzer.GenerateMaterialConsumptionFunction(construction)(areas)}");
     IList<double> optimizedAreas = optimizer.Optimize(construction, restrictions, OptimizationOptions.Default);
     Console.WriteLine(optimizedAreas);
 
-    Console.WriteLine($"Перемещения стало {nodeDisplacementFunc(optimizedAreas)}");
     Console.WriteLine(
-        $"Материалоемкость стало {analyzer.GenerateMaterialConsumptionFunction(construction)(optimizedAreas)}");
+        $"Материалоемкость после оптимизации {analyzer.GenerateMaterialConsumptionFunction(construction)(optimizedAreas)}"
+    );
 }
 
 {
-    // var node1 = new NodeEntity(0, 600);
-    // var node2 = new NodeEntity(400, 600);
-    // var node3 = new NodeEntity(400, 0);
-    // var node4 = new NodeEntity(600, 200);
-    // var node5 = new NodeEntity(1000, 0);
+    // var node1 = new Node(0, 600);
+    // var node2 = new Node(400, 600);
+    // var node3 = new Node(400, 0);
+    // var node4 = new Node(600, 200);
+    // var node5 = new Node(1000, 0);
     //
-    // var element1 = new ElementEntity(node1, node2, 2_000_000, 10);
-    // var element2 = new ElementEntity(node2, node3, 2_000_000, 10);
-    // var element3 = new ElementEntity(node2, node4, 2_000_000, 10);
-    // var element4 = new ElementEntity(node3, node4, 2_000_000, 10);
-    // var element5 = new ElementEntity(node3, node5, 2_000_000, 10);
-    // var element6 = new ElementEntity(node4, node5, 2_000_000, 10);
+    // var element1 = new Element(node1, node2, 2_000_000, 10);
+    // var element2 = new Element(node2, node3, 2_000_000, 10);
+    // var element3 = new Element(node2, node4, 2_000_000, 10);
+    // var element4 = new Element(node3, node4, 2_000_000, 10);
+    // var element5 = new Element(node3, node5, 2_000_000, 10);
+    // var element6 = new Element(node4, node5, 2_000_000, 10);
     //
     // var load = new ConcentratedLoad(0, -10_000);
     //
@@ -336,16 +347,16 @@ using MathNet.Numerics.LinearAlgebra;
 
 //
 // {
-//     var node0 = new NodeEntity(0, 7);
-//     var node1 = new NodeEntity(12, 9);
-//     var node2 = new NodeEntity(14, 0);
-//     var node3 = new NodeEntity(0, 0);
+//     var node0 = new Node(0, 7);
+//     var node1 = new Node(12, 9);
+//     var node2 = new Node(14, 0);
+//     var node3 = new Node(0, 0);
 //
-//     var element0 = new ElementEntity(node0, node1, 21_000_000, 40_000);
-//     var element1 = new ElementEntity(node1, node2, 21_000_000, 40_000);
-//     var element2 = new ElementEntity(node2, node3, 21_000_000, 40_000);
-//     var element3 = new ElementEntity(node3, node0, 21_000_000, 40_000);
-//     var element4 = new ElementEntity(node0, node2, 21_000_000, 40_000);
+//     var element0 = new Element(node0, node1, 21_000_000, 40_000);
+//     var element1 = new Element(node1, node2, 21_000_000, 40_000);
+//     var element2 = new Element(node2, node3, 21_000_000, 40_000);
+//     var element3 = new Element(node3, node0, 21_000_000, 40_000);
+//     var element4 = new Element(node0, node2, 21_000_000, 40_000);
 //
 //     var load = new ConcentratedLoad(1, 0);
 //
@@ -369,7 +380,7 @@ using MathNet.Numerics.LinearAlgebra;
 //         .AddConstraint(node2, v)
 //         .AddConstraint(node3, uv)
 //         .Build();
-//     
+//
 //
 //     ConstructionDto constructionDto = ConstructionDto.FromModel(construction);
 //     var serializer = new ConstructionSerializer();
@@ -395,7 +406,6 @@ using MathNet.Numerics.LinearAlgebra;
 // }
 
 #endregion Serialization Test
-
 
 #region MultiGradientDescent
 

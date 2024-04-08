@@ -8,7 +8,7 @@ public class AddNodeCommand(ConstructionModel constructionModel, Vector2 positio
 {
     private int _addedNodeId;
 
-    public string Name => "Add NodeEntity";
+    public string Name => "Add Node";
 
     public void Execute() => _addedNodeId = constructionModel.AddNode(position);
 

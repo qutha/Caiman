@@ -47,5 +47,5 @@ public class Element
     [JsonIgnore] public double Cos => Dx / Length;
 
     public override string ToString() =>
-        $"ElementEntity:\n\tId: {Id}, Start NodeEntity: {StartNode.Id}, End NodeEntity: {EndNode.Id}, Elasticity: {Elasticity}, Area: {Area}";
+        $"Element:\n\tId: {Id}, Start Node: {StartNode.Id}, End Node: {EndNode.Id}, Elasticity: {Elasticity}, Area: {Area}";
 }
