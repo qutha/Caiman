@@ -15,8 +15,7 @@ public class CommandView : IGuiRender
         _redoStack = redoStack;
     }
 
-    public Action? Undo { get; set; }
-    public Action? Redo { get; set; }
+    #region IGuiRender Members
 
     public void RenderGui()
     {
@@ -32,12 +31,18 @@ public class CommandView : IGuiRender
             Redo?.Invoke();
         }
 
-        foreach (ICommand command in _redoStack)
+        ImGui.SameLine();
+        if (ImGui.Button("Clear"))
+        {
+            Clear?.Invoke();
+        }
+
+        foreach (var command in _redoStack.Reverse())
         {
             ImGui.TextColored(new Vector4(1, 0, 0, 1), command.Name);
         }
 
-        foreach (ICommand command in _undoStack)
+        foreach (var command in _undoStack)
         {
             ImGui.TextColored(new Vector4(0, 0.5f, 0, 1), command.Name);
         }
@@ -45,4 +50,10 @@ public class CommandView : IGuiRender
 
         ImGui.End();
     }
+
+    #endregion
+
+    public event Action? Undo;
+    public event Action? Redo;
+    public event Action? Clear;
 }

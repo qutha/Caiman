@@ -1,6 +1,5 @@
 using System.Diagnostics;
 using System.Numerics;
-using Caiman.Core.Depr.Construction;
 using Caiman.Editor.Interfaces;
 using ImGuiNET;
 
@@ -9,12 +8,14 @@ namespace Caiman.Editor.Construction;
 public class ConstructionGuiView : IGuiRender
 {
     private readonly ConstraintMenuState _constraintMenuState = new();
-    private readonly ConstructionModel _constructionModel;
+    private readonly EditorConstruction _construction;
     private readonly ElementMenuState _elementMenuState = new();
     private readonly LoadMenuState _loadMenuState = new();
     private readonly NodeMenuState _nodeMenuState = new();
 
-    public ConstructionGuiView(ConstructionModel constructionModel) => _constructionModel = constructionModel;
+    public ConstructionGuiView(EditorConstruction construction) => _construction = construction;
+
+    #region IGuiRender Members
 
     public void RenderGui()
     {
@@ -52,6 +53,8 @@ public class ConstructionGuiView : IGuiRender
         ImGui.End();
     }
 
+    #endregion
+
     #region Events
 
     public event Action<Vector2>? AddNode;
@@ -62,7 +65,7 @@ public class ConstructionGuiView : IGuiRender
     public event Action<int>? RemoveElement;
 
     public event Action<int, Vector2>? AddLoad;
-    public event Action<int, Vector2>? RemoveLoad;
+    public event Action<int, int>? RemoveLoad;
     public event Action<int, bool, bool>? AddConstraint;
     public event Action<int>? RemoveConstraint;
 
@@ -80,6 +83,7 @@ public class ConstructionGuiView : IGuiRender
 
     private class LoadMenuState
     {
+        public int LoadId;
         public int NodeId;
         public float X;
         public float Y;
@@ -115,10 +119,11 @@ public class ConstructionGuiView : IGuiRender
             AddNode?.Invoke(new Vector2(_nodeMenuState.X, _nodeMenuState.Y));
         }
 
+        ImGui.Separator();
         ImGui.InputInt("Id", ref _nodeMenuState.Id);
         if (ImGui.Button("Remove Node"))
         {
-            if (_nodeMenuState.Id < 0 || _nodeMenuState.Id >= _constructionModel.Nodes.Count)
+            if (_nodeMenuState.Id < 0 || _nodeMenuState.Id >= _construction.Nodes.Count)
             {
                 Debug.WriteLine("Invalid Id");
                 return;
@@ -141,6 +146,7 @@ public class ConstructionGuiView : IGuiRender
                 _elementMenuState.Area));
         }
 
+        ImGui.Separator();
         ImGui.InputInt("Id", ref _elementMenuState.Id);
         if (ImGui.Button("Remove Element"))
         {
@@ -150,15 +156,15 @@ public class ConstructionGuiView : IGuiRender
 
     private void RenderConstraintMenu()
     {
-        ImGui.InputInt("Start Node Id", ref _constraintMenuState.NodeId);
+        ImGui.InputInt("Node Id", ref _constraintMenuState.NodeId);
         ImGui.Checkbox("X", ref _constraintMenuState.X);
+        ImGui.SameLine();
         ImGui.Checkbox("Y", ref _constraintMenuState.Y);
         if (ImGui.Button("Add Constraint"))
         {
             AddConstraint?.Invoke(_constraintMenuState.NodeId, _constraintMenuState.X, _constraintMenuState.Y);
         }
 
-        ImGui.InputInt("Node Id", ref _constraintMenuState.NodeId);
         if (ImGui.Button("Remove Constraint"))
         {
             RemoveConstraint?.Invoke(_constraintMenuState.NodeId);
@@ -175,9 +181,11 @@ public class ConstructionGuiView : IGuiRender
             AddLoad?.Invoke(_loadMenuState.NodeId, new Vector2(_loadMenuState.X, _loadMenuState.Y));
         }
 
+        ImGui.Separator();
+        ImGui.InputInt("Load Id", ref _loadMenuState.LoadId);
         if (ImGui.Button("Remove Load"))
         {
-            RemoveLoad?.Invoke(_loadMenuState.NodeId, new Vector2(_loadMenuState.X, _loadMenuState.Y));
+            RemoveLoad?.Invoke(_loadMenuState.NodeId, _loadMenuState.LoadId);
         }
     }
 

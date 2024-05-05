@@ -16,7 +16,7 @@ public class NodeModel
         var dto = new NodeModel
         {
             NodeIndex = construction.Nodes.IndexOf(node),
-            LoadList = node.LoadList,
+            LoadList = node.Loads,
             Constraint = node.Constraint is null
                 ? null
                 : new Constraint(node.Constraint.X, node.Constraint.Y),

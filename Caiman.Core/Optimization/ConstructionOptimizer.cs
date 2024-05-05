@@ -1,7 +1,5 @@
 using Caiman.Core.Analysis;
-using Caiman.Core.Construction;
 using Caiman.Core.Optimization.Restrictions;
-
 using MathNet.Numerics.LinearAlgebra;
 
 namespace Caiman.Core.Optimization;
@@ -12,15 +10,8 @@ public class ConstructionOptimizer(
 {
     private const double NormativeStepFactor = 0.2;
 
-    private enum PointState
-    {
-        Inside,
-        Outside,
-        OnBoundary,
-    }
-
     public IList<double> Optimize(Construction.Construction construction, IList<OptimizationRestriction> restrictions,
-            OptimizationOptions options)
+        OptimizationOptions options)
     {
         Vector<double> initialAreas = analyzer.GetAreasVector(construction);
         Vector<double> optimizedAreas = analyzer.GetAreasVector(construction);
@@ -30,7 +21,7 @@ public class ConstructionOptimizer(
         var iteration = 0;
         while (true)
         {
-            foreach (OptimizationRestriction optimizationRestriction in restrictions)
+            foreach (var optimizationRestriction in restrictions)
             {
                 optimizationRestriction.UpdateRestriction(optimizedAreas);
             }
@@ -39,7 +30,7 @@ public class ConstructionOptimizer(
                     IList<OptimizationRestriction> violatedRestrictions) =
                 SortRestrictions(restrictions);
 
-            PointState pointState = GetPointState(activeRestrictions, violatedRestrictions);
+            var pointState = GetPointState(activeRestrictions, violatedRestrictions);
 
             if (pointState == PointState.Outside)
             {
@@ -88,16 +79,21 @@ public class ConstructionOptimizer(
             iteration++;
         }
 
-        var efficiency = Math.Abs(targetFunc(optimizedAreas) - initialValue) / initialValue * 100;
-        Console.WriteLine($"Эффективность {efficiency}");
-
         return optimizedAreas;
+    }
+
+    public double GetEfficiency(Func<IList<double>, double> targetFunc, IList<double> initialAreas,
+        IList<double> optimizedAreas)
+    {
+        var initialValue = targetFunc(initialAreas);
+        var efficiency = Math.Abs(targetFunc(optimizedAreas) - initialValue) / initialValue * 100;
+        return efficiency;
     }
 
     private PointState GetPointState(IEnumerable<OptimizationRestriction> activeRestrictions,
         IEnumerable<OptimizationRestriction> violatedRestrictions)
     {
-        PointState pointState = activeRestrictions.Count() switch
+        var pointState = activeRestrictions.Count() switch
         {
             0 => PointState.Inside,
             > 0 => PointState.OnBoundary,
@@ -119,7 +115,7 @@ public class ConstructionOptimizer(
         Vector<double> passiveStep = Vector<double>.Build.Dense(passiveRestrictions.Count);
         for (var i = 0; i < passiveRestrictions.Count; i++)
         {
-            OptimizationRestriction passiveRestriction = passiveRestrictions[i];
+            var passiveRestriction = passiveRestrictions[i];
             passiveStep[i] = -passiveRestriction.Value / gradientFinder
                 .FindGradient(passiveRestriction.GetRestrictionFunc(), areas).DotProduct(directionNorm);
         }
@@ -147,7 +143,18 @@ public class ConstructionOptimizer(
         return (active, passive, violated);
     }
 
-    #region Direction Correct
+    #region Nested type: PointState
+
+    private enum PointState
+    {
+        Inside,
+        Outside,
+        OnBoundary,
+    }
+
+    #endregion
+
+    #region Direction Correction
 
     private Vector<double> AlongBoundaryDirection(
         Vector<double> targetAntiGradient,
@@ -161,7 +168,7 @@ public class ConstructionOptimizer(
                 gradientFinder.FindAntiGradient(activeRestrictions[0].GetRestrictionFunc(), areas);
             var lambda = -restrictionAntiGradient.DotProduct(targetAntiGradient) /
                 restrictionAntiGradient.DotProduct(restrictionAntiGradient);
-            direction = targetAntiGradient + (restrictionAntiGradient * lambda);
+            direction = targetAntiGradient + restrictionAntiGradient * lambda;
             return direction;
         }
 
@@ -174,7 +181,7 @@ public class ConstructionOptimizer(
             multipliers = FindLagrangeMultipliersForActiveRestrictions(targetAntiGradient, restrictionsAntiGradients);
         }
 
-        direction = (restrictionsAntiGradients * multipliers) + targetAntiGradient;
+        direction = restrictionsAntiGradients * multipliers + targetAntiGradient;
         return direction;
     }
 
@@ -191,7 +198,7 @@ public class ConstructionOptimizer(
         return areas + delta;
     }
 
-    #endregion Direction Correct
+    #endregion Direction Correction
 
     #region Helpers
 

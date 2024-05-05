@@ -1,23 +1,24 @@
-using Caiman.Core.Depr.Construction;
 using Caiman.Editor.Commands;
 
 namespace Caiman.Editor.Construction.Commands;
 
 public class RemoveNodeCommand : ICommand
 {
-    private readonly ConstructionModel _constructionModel;
+    private readonly EditorConstruction _construction;
     private readonly int _nodeId;
-    private Node? _deletedNode;
+    private EditorNode? _deletedNode;
 
-    public RemoveNodeCommand(ConstructionModel constructionModel, int nodeId)
+    public RemoveNodeCommand(EditorConstruction construction, int nodeId)
     {
-        _constructionModel = constructionModel;
+        _construction = construction;
         _nodeId = nodeId;
     }
 
+    #region ICommand Members
+
     public string Name => "Remove Node";
 
-    public void Execute() => _deletedNode = _constructionModel.RemoveNode(_nodeId);
+    public void Execute() => _deletedNode = _construction.RemoveNode(_nodeId);
 
     public void Undo()
     {
@@ -26,6 +27,8 @@ public class RemoveNodeCommand : ICommand
             return;
         }
 
-        _constructionModel.AddDeletedNode(_deletedNode);
+        _construction.AddDeletedNode(_deletedNode);
     }
+
+    #endregion
 }

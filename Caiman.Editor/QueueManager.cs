@@ -4,42 +4,66 @@ namespace Caiman.Editor;
 
 public class QueueManager : IRender, IWorldRender, IGuiRender, IUpdate
 {
-    public List<IRender> RenderQueue { get; } = [];
-    public List<IWorldRender> WorldRenderQueue { get; } = [];
-    public List<IGuiRender> GuiRenderQueue { get; } = [];
-    public List<IUpdate> UpdateQueue { get; } = [];
+    public QueueManager(IEnumerable<IQueueManaged> items)
+    {
+        foreach (var item in items)
+        {
+            Add(item);
+        }
+    }
+
+    private List<IRender> RenderQueue { get; } = [];
+    private List<IWorldRender> WorldRenderQueue { get; } = [];
+    private List<IGuiRender> GuiRenderQueue { get; } = [];
+    private List<IUpdate> UpdateQueue { get; } = [];
+
+    #region IGuiRender Members
 
     public void RenderGui()
     {
-        foreach (IGuiRender item in GuiRenderQueue)
+        foreach (var item in GuiRenderQueue)
         {
             item.RenderGui();
         }
     }
 
+    #endregion
+
+    #region IRender Members
+
     public void Render()
     {
-        foreach (IRender item in RenderQueue)
+        foreach (var item in RenderQueue)
         {
             item.Render();
         }
     }
 
+    #endregion
+
+    #region IUpdate Members
+
     public void Update()
     {
-        foreach (IUpdate item in UpdateQueue)
+        foreach (var item in UpdateQueue)
         {
             item.Update();
         }
     }
 
+    #endregion
+
+    #region IWorldRender Members
+
     public void RenderWorld()
     {
-        foreach (IWorldRender item in WorldRenderQueue)
+        foreach (var item in WorldRenderQueue)
         {
             item.RenderWorld();
         }
     }
+
+    #endregion
 
     public void Add<T>(T item) where T : IQueueManaged
     {

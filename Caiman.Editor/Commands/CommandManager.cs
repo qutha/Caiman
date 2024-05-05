@@ -5,17 +5,21 @@ namespace Caiman.Editor.Commands;
 
 public class CommandManager : ICommandManager, IGuiRender
 {
+    private readonly EditorConsole _console;
     private readonly Stack<ICommand> _redoStack = new();
     private readonly Stack<ICommand> _undoStack = new();
     private readonly CommandView _view;
 
-    public CommandManager()
+    public CommandManager(EditorConsole console)
     {
+        _console = console;
         _view = new CommandView(_undoStack, _redoStack);
         _view.Undo += Undo;
         _view.Redo += Redo;
+        _view.Clear += Clear;
     }
 
+    #region ICommandManager Members
 
     public void Push(ICommand command)
     {
@@ -24,11 +28,15 @@ public class CommandManager : ICommandManager, IGuiRender
             command.Execute();
             _undoStack.Push(command);
             _redoStack.Clear();
-            Debug.WriteLine("Command: " + command.Name);
+            var message = $"Command: {command.Name}";
+            _console.WriteLine(message);
+            Debug.WriteLine(message);
         }
         catch (Exception ex)
         {
-            Debug.WriteLine($"Command Exception: {ex.Message}");
+            var message = $"Command: {ex.Message}";
+            _console.WriteLine(message);
+            Debug.WriteLine(message);
         }
     }
 
@@ -38,13 +46,18 @@ public class CommandManager : ICommandManager, IGuiRender
         {
             try
             {
-                ICommand redoneCommand = _redoStack.Pop();
-                redoneCommand.Execute();
-                _undoStack.Push(redoneCommand);
+                var redoCommand = _redoStack.Pop();
+                redoCommand.Execute();
+                _undoStack.Push(redoCommand);
+                var message = $"Redo: {redoCommand.Name}";
+                _console.WriteLine(message);
+                Debug.WriteLine(message);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Command Exception: {ex.Message}");
+                var message = $"Command: {ex.Message}";
+                _console.WriteLine(message);
+                Debug.WriteLine(message);
             }
         }
         else
@@ -59,13 +72,18 @@ public class CommandManager : ICommandManager, IGuiRender
         {
             try
             {
-                ICommand undoneCommand = _undoStack.Pop();
+                var undoneCommand = _undoStack.Pop();
                 undoneCommand.Undo();
                 _redoStack.Push(undoneCommand);
+                var message = $"Undo: {undoneCommand.Name}";
+                _console.WriteLine(message);
+                Debug.WriteLine(message);
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"Command Exception: {ex.Message}");
+                var message = $"Command: {ex.Message}";
+                _console.WriteLine(message);
+                Debug.WriteLine(message);
             }
         }
         else
@@ -74,8 +92,17 @@ public class CommandManager : ICommandManager, IGuiRender
         }
     }
 
-    public void RenderGui()
+    #endregion
+
+    #region IGuiRender Members
+
+    public void RenderGui() => _view.RenderGui();
+
+    #endregion
+
+    private void Clear()
     {
-        _view.RenderGui();
+        _undoStack.Clear();
+        _redoStack.Clear();
     }
 }

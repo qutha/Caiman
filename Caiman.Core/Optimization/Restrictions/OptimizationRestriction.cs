@@ -20,4 +20,6 @@ public abstract class OptimizationRestriction
         };
         Type = type;
     }
+
+    public override string ToString() => "Optimization Restriction";
 }

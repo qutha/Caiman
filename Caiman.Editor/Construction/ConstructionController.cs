@@ -1,5 +1,5 @@
 using System.Numerics;
-using Caiman.Core.Depr.Construction;
+using Caiman.Editor.Camera;
 using Caiman.Editor.Commands;
 using Caiman.Editor.Construction.Commands;
 using Caiman.Editor.Interfaces;
@@ -8,19 +8,22 @@ namespace Caiman.Editor.Construction;
 
 public class ConstructionController : IGuiRender, IWorldRender
 {
-    private readonly CommandManager _commandManager;
-    private readonly ConstructionModel _constructionModel;
-    private readonly ConstructionGraphicsView _graphicsGraphicsView;
+    private readonly CameraController _cameraController;
+    private readonly ICommandManager _commandManager;
+    private readonly EditorConstruction _editorConstruction;
     private readonly ConstructionGuiView _guiView;
 
 
     public ConstructionController(
-        CommandManager commandManager,
-        ConstructionModel constructionModel)
+        ICommandManager commandManager,
+        EditorConstruction editorConstruction,
+        CameraController cameraController)
     {
+        _editorConstruction = editorConstruction;
         _commandManager = commandManager;
-        _graphicsGraphicsView = new ConstructionGraphicsView(constructionModel);
-        _guiView = new ConstructionGuiView(constructionModel);
+        _cameraController = cameraController;
+        _cameraController.ZoomChanged += _editorConstruction.ChangeZoom;
+        _guiView = new ConstructionGuiView(editorConstruction);
         _guiView.AddNode += AddNode;
         _guiView.RemoveNode += RemoveNode;
         _guiView.AddElement += AddElement;
@@ -29,37 +32,40 @@ public class ConstructionController : IGuiRender, IWorldRender
         _guiView.RemoveConstraint += RemoveConstraint;
         _guiView.AddLoad += AddLoad;
         _guiView.RemoveLoad += RemoveLoad;
-
-
-        _constructionModel = constructionModel;
     }
+
+    #region IGuiRender Members
 
     public void RenderGui() => _guiView.RenderGui();
 
-    public void RenderWorld() => _graphicsGraphicsView.RenderWorld();
+    #endregion
 
-    private void RemoveLoad(int nodeId, Vector2 value)
-    {
-        // _commandManager.Push(new RemoveLoadCommand(_constructionModel, nodeId, value));
-    }
+    #region IWorldRender Members
+
+    public void RenderWorld() => _editorConstruction.RenderWorld();
+
+    #endregion
+
+    private void RemoveLoad(int nodeId, int loadId) =>
+        _commandManager.Push(new RemoveLoadCommand(_editorConstruction, nodeId, loadId));
 
     private void AddLoad(int nodeId, Vector2 value) =>
-        _commandManager.Push(new AddLoadCommand(_constructionModel, nodeId, value));
+        _commandManager.Push(new AddLoadCommand(_editorConstruction, nodeId, value));
 
     private void RemoveConstraint(int nodeId) =>
-        _commandManager.Push(new RemoveConstraintCommand(_constructionModel, nodeId));
+        _commandManager.Push(new RemoveConstraintCommand(_editorConstruction, nodeId));
 
     private void AddConstraint(int nodeId, bool x, bool y) =>
-        _commandManager.Push(new AddConstraintCommand(_constructionModel, nodeId, x, y));
+        _commandManager.Push(new AddConstraintCommand(_editorConstruction, nodeId, x, y));
 
-    private void AddNode(Vector2 position) => _commandManager.Push(new AddNodeCommand(_constructionModel, position));
+    private void AddNode(Vector2 position) => _commandManager.Push(new AddNodeCommand(_editorConstruction, position));
 
-    private void RemoveNode(int nodeId) => _commandManager.Push(new RemoveNodeCommand(_constructionModel, nodeId));
+    private void RemoveNode(int nodeId) => _commandManager.Push(new RemoveNodeCommand(_editorConstruction, nodeId));
 
     private void AddElement((int startNodeId, int endNodeId, double elasticity, double area) element) =>
-        _commandManager.Push(new AddElementCommand(_constructionModel, element.startNodeId, element.endNodeId,
+        _commandManager.Push(new AddElementCommand(_editorConstruction, element.startNodeId, element.endNodeId,
             element.elasticity, element.area));
 
     private void RemoveElement(int elementId) =>
-        _commandManager.Push(new RemoveElementCommand(_constructionModel, elementId));
+        _commandManager.Push(new RemoveElementCommand(_editorConstruction, elementId));
 }

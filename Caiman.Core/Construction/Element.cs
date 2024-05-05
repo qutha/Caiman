@@ -1,5 +1,12 @@
 namespace Caiman.Core.Construction;
 
+/// <summary>
+/// 
+/// </summary>
+/// <param name="startNode">Начальный узел</param>
+/// <param name="endNode">Конечный узел</param>
+/// <param name="elasticity">Модуль упругости, в кг/см^2</param>
+/// <param name="area">Площадь поперечного сечения, в см^2</param>
 public class Element(Node startNode, Node endNode, double elasticity, double area)
 {
     public Node StartNode { get; set; } = startNode;

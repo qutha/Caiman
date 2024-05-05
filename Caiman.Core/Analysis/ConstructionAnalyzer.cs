@@ -1,7 +1,6 @@
 using Caiman.Core.Construction;
 using Caiman.Core.Construction.Exceptions;
 using Caiman.Core.Matrices;
-
 using MathNet.Numerics.LinearAlgebra;
 using MathNet.Numerics.LinearAlgebra.Double;
 
@@ -24,9 +23,9 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     /// <returns>Функцию расхода материала от площадей стержней</returns>
     public Func<IList<double>, double> GenerateMaterialConsumptionFunction(Construction.Construction construction)
     {
-        double function(IList<double> areas) => areas.Select((t, i) => construction.Elements[i].Length * t).Sum();
+        return Function;
 
-        return function;
+        double Function(IList<double> areas) => areas.Select((t, i) => construction.Elements[i].Length * t).Sum();
     }
 
     /// <summary>
@@ -42,7 +41,10 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
         Axis axis)
     {
         var nodeIndex = construction.IndexOf(node);
-        double function(IList<double> areas)
+
+        return Function;
+
+        double Function(IList<double> areas)
         {
             var initialAreas = construction.Elements.Select(el => el.Area).ToArray();
             for (var i = 0; i < areas.Count; i++)
@@ -54,7 +56,7 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
             var displacement = axis switch
             {
                 Axis.X => vector[nodeIndex * Dimensions],
-                Axis.Y => vector[(nodeIndex * Dimensions) + 1],
+                Axis.Y => vector[nodeIndex * Dimensions + 1],
 
                 _ => throw new InvalidOperationException("Это невозможно"),
             };
@@ -66,8 +68,6 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
 
             return displacement;
         }
-
-        return function;
     }
 
     #endregion Function Generators
@@ -101,25 +101,24 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     /// <param name="displacementVector">Вектор перемещения, если не задан, то произойдет расчет всей системы</param>
     /// <returns>Вектор внутренних усилий в кг</returns>
     /// <exception cref="ElementNotFoundException">Стержень не находится внутри системы</exception>
-    public Vector<double> FindInternalForces(Construction.Construction construction, Element element,
+    public double FindInternalForces(Construction.Construction construction, Element element,
         Vector<double>? displacementVector = null)
     {
         Vector<double> displacement = displacementVector ?? FindDisplacementVector(construction);
-        (var startIndex, var endIndex) = construction.GetNodesIndicesFromElement(element);
+        var (startIndex, endIndex) = construction.GetNodesIndicesFromElement(element);
         Vector<double>? elementDisplacement = Vector<double>.Build.DenseOfArray(
             [
                 displacement[startIndex * Dimensions],
-                displacement[(startIndex * Dimensions) + 1],
+                displacement[startIndex * Dimensions + 1],
                 displacement[endIndex * Dimensions],
-                displacement[(endIndex * Dimensions) + 1],
+                displacement[endIndex * Dimensions + 1],
             ]
         );
         Matrix<double> elementLocalStiffnessMatrix = CreateLocalElementStiffnessMatrix(element);
         Matrix<double> transformationMatrix =
             matrixBuilder.CreateTransformationMatrix(element.Sin, element.Cos);
-
         Vector<double> internalForces = elementLocalStiffnessMatrix * transformationMatrix * elementDisplacement;
-        return internalForces;
+        return internalForces[2];
     }
 
     /// <summary>
@@ -133,11 +132,11 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     /// <param name="element">Стержень, в котором требуется найти напряжения</param>
     /// <param name="internalForces">Вектор внутренних усилий, если не задан, то произойдет расчет всей системы</param>
     /// <returns>Вектор напряжений в кг/см2</returns>
-    public Vector<double> FindStresses(Construction.Construction construction, Element element,
-        Vector<double>? internalForces = null)
+    public double FindStresses(Construction.Construction construction, Element element,
+        double? internalForces = null)
     {
-        Vector<double> internalForcesVector = internalForces ?? FindInternalForces(construction, element);
-        Vector<double> stresses = internalForcesVector / element.Area;
+        var internalForcesVector = internalForces ?? FindInternalForces(construction, element);
+        var stresses = internalForcesVector / element.Area;
         return stresses;
     }
 
@@ -151,12 +150,12 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     public Vector<double> GetLoadVector(Construction.Construction construction)
     {
         Vector<double> loadVector = Vector<double>.Build.Sparse(construction.Nodes.Count * Dimensions);
-        foreach (Node node in construction.Nodes)
+        foreach (var node in construction.Nodes)
         {
             var nodeIndex = construction.IndexOf(node);
             var pos = nodeIndex * 2;
-            loadVector[pos] = node.LoadList.Sum(l => l.X);
-            loadVector[pos + 1] = node.LoadList.Sum(l => l.Y);
+            loadVector[pos] = node.Loads.Sum(l => l.X);
+            loadVector[pos + 1] = node.Loads.Sum(l => l.Y);
         }
 
         return loadVector;
@@ -170,10 +169,10 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     {
         var nodesCount = construction.Nodes.Count;
         var constructionStiffnessMatrix = SparseMatrix.Create(nodesCount * Dimensions, nodesCount * Dimensions, 0);
-        foreach (Element element in construction.Elements)
+        foreach (var element in construction.Elements)
         {
             Matrix<double> elementStiffnessMatrix = CreateGlobalElementStiffnessMatrix(element);
-            (var startNodeIndex, var endNodeIndex) = construction.GetNodesIndicesFromElement(element);
+            var (startNodeIndex, endNodeIndex) = construction.GetNodesIndicesFromElement(element);
             AddToConstructionStiffnessMatrix(constructionStiffnessMatrix, elementStiffnessMatrix, startNodeIndex,
                 endNodeIndex);
         }
@@ -211,23 +210,23 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
     private void AddToConstructionStiffnessMatrix(Matrix<double> constructionStiffnessMatrix,
         Matrix<double> elementStiffnessMatrix, NodeIndex startNodeIndex, NodeIndex endNodeIndex)
     {
-        foreach ((var row, var col, var value) in elementStiffnessMatrix.EnumerateIndexed())
+        foreach (var (row, col, value) in elementStiffnessMatrix.EnumerateIndexed())
         {
             var nodeRow = row < Dimensions
-                ? (startNodeIndex * Dimensions) + row
-                : (endNodeIndex * Dimensions) + row - Dimensions;
+                ? startNodeIndex * Dimensions + row
+                : endNodeIndex * Dimensions + row - Dimensions;
             var nodeCol = col < Dimensions
-                ? (startNodeIndex * Dimensions) + col
-                : (endNodeIndex * Dimensions) + col - Dimensions;
+                ? startNodeIndex * Dimensions + col
+                : endNodeIndex * Dimensions + col - Dimensions;
             constructionStiffnessMatrix[nodeRow, nodeCol] += value;
         }
     }
 
     private void ApplyConstraints(Construction.Construction construction, Matrix<double> constructionStiffnessMatrix)
     {
-        foreach (Node node in construction.Nodes.Where(n => n.Constraint is not null))
+        foreach (var node in construction.Nodes)
         {
-            Constraint constraint = node.Constraint!;
+            var constraint = node.Constraint;
             var nodeIndex = construction.IndexOf(node);
             if (constraint.X)
             {
@@ -240,8 +239,8 @@ public class ConstructionAnalyzer(IMatrixBuilder matrixBuilder)
 
             if (constraint.Y)
             {
-                var row = (nodeIndex * Dimensions) + 1;
-                var col = (nodeIndex * Dimensions) + 1;
+                var row = nodeIndex * Dimensions + 1;
+                var col = nodeIndex * Dimensions + 1;
                 constructionStiffnessMatrix.ClearColumn(col);
                 constructionStiffnessMatrix.ClearRow(row);
                 constructionStiffnessMatrix[row, col] = 1;

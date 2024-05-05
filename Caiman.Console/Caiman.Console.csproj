@@ -9,8 +9,13 @@
 
     <ItemGroup>
         <ProjectReference Include="..\Caiman.Core\Caiman.Core.csproj"/>
-        <ProjectReference Include="..\Caiman.CoreDepr\Caiman.CoreDepr.csproj"/>
         <ProjectReference Include="..\Caiman.Storage\Caiman.Storage.csproj"/>
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="ncBIMSmgd">
+            <HintPath>..\..\..\..\..\Users\Basil\Desktop\nanoCAD\SDK\ncBIMS_SDK_241(75776)\include-x64\ncBIMSmgd.dll</HintPath>
+        </Reference>
     </ItemGroup>
 
 </Project>

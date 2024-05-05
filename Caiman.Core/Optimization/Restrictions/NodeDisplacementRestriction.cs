@@ -10,4 +10,6 @@ public class NodeDisplacementRestriction(
         var displacementAbs = Math.Abs(nodeDisplacementOnAreasFunction(areas));
         return displacementAbs - maxDisplacement;
     }
+
+    public override string ToString() => $"Node Displacement Restriction:\n\tMax Displacement: {maxDisplacement}";
 }

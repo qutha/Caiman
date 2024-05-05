@@ -1,9 +1,9 @@
 ﻿using Caiman.Core.Analysis;
 using Caiman.Core.Construction;
+using Caiman.Core.DiscreteSelection;
 using Caiman.Core.Matrices;
 using Caiman.Core.Optimization;
 using Caiman.Core.Optimization.Restrictions;
-
 using MathNet.Numerics.LinearAlgebra;
 
 {
@@ -182,26 +182,31 @@ using MathNet.Numerics.LinearAlgebra;
 
 {
     // Мой вариант
+
+
     var node1 = new Node(0, 700);
     var node2 = new Node(1200, 900);
     var node3 = new Node(1400, 0);
     var node4 = new Node(0, 0);
 
-    var element1 = new Element(node1, node2, 2_000_000, 14);
-    var element2 = new Element(node2, node3, 2_000_000, 14);
-    var element3 = new Element(node3, node4, 2_000_000, 14);
-    var element4 = new Element(node4, node1, 2_000_000, 14);
-    var element5 = new Element(node1, node3, 2_000_000, 14);
-    var element6 = new Element(node4, node2, 2_000_000, 14);
+    const double elasticity = 2_000_000;
+    const int area = 14;
+
+    var element1 = new Element(node1, node2, elasticity, area);
+    var element2 = new Element(node2, node3, elasticity, area);
+    var element3 = new Element(node3, node4, elasticity, area);
+    var element4 = new Element(node4, node1, elasticity, area);
+    var element5 = new Element(node1, node3, elasticity, area);
+    var element6 = new Element(node4, node2, elasticity, area);
 
     var load = new ConcentratedLoad(10_000, 0);
 
     var uv = new Constraint(true, true);
     var v = new Constraint(false, true);
 
-    var constructionBuilder = new ConstructionBuilder();
+    var constructionBuilder = new ConstructionBuilderFactory().CreateBuilder();
 
-    Construction construction = constructionBuilder
+    var construction = constructionBuilder
         .AddNode(node1)
         .AddNode(node2)
         .AddNode(node3)
@@ -226,13 +231,14 @@ using MathNet.Numerics.LinearAlgebra;
 
     Func<IList<double>, double> nodeDisplacementFunc =
         analyzer.GenerateNodeDisplacementOnAreasFunction(construction, node2, Axis.X);
+
     var areas = construction.Elements.Select(el => el.Area).ToArray();
-    Vector<double> internalForces1 = analyzer.FindInternalForces(construction, element1);
-    Vector<double> internalForces2 = analyzer.FindInternalForces(construction, element2);
-    Vector<double> internalForces3 = analyzer.FindInternalForces(construction, element3);
-    Vector<double> internalForces4 = analyzer.FindInternalForces(construction, element4);
-    Vector<double> internalForces5 = analyzer.FindInternalForces(construction, element5);
-    Vector<double> internalForces6 = analyzer.FindInternalForces(construction, element6);
+    var internalForces1 = analyzer.FindInternalForces(construction, element1);
+    var internalForces2 = analyzer.FindInternalForces(construction, element2);
+    var internalForces3 = analyzer.FindInternalForces(construction, element3);
+    var internalForces4 = analyzer.FindInternalForces(construction, element4);
+    var internalForces5 = analyzer.FindInternalForces(construction, element5);
+    var internalForces6 = analyzer.FindInternalForces(construction, element6);
     Console.WriteLine("Внутренние усилия");
     Console.WriteLine(internalForces1);
     Console.WriteLine(internalForces2);
@@ -241,12 +247,12 @@ using MathNet.Numerics.LinearAlgebra;
     Console.WriteLine(internalForces5);
     Console.WriteLine(internalForces6);
 
-    Vector<double> stresses1 = analyzer.FindStresses(construction, element1);
-    Vector<double> stresses2 = analyzer.FindStresses(construction, element2);
-    Vector<double> stresses3 = analyzer.FindStresses(construction, element3);
-    Vector<double> stresses4 = analyzer.FindStresses(construction, element4);
-    Vector<double> stresses5 = analyzer.FindStresses(construction, element5);
-    Vector<double> stresses6 = analyzer.FindStresses(construction, element6);
+    var stresses1 = analyzer.FindStresses(construction, element1);
+    var stresses2 = analyzer.FindStresses(construction, element2);
+    var stresses3 = analyzer.FindStresses(construction, element3);
+    var stresses4 = analyzer.FindStresses(construction, element4);
+    var stresses5 = analyzer.FindStresses(construction, element5);
+    var stresses6 = analyzer.FindStresses(construction, element6);
 
     Console.WriteLine("Напряжения");
     Console.WriteLine(stresses1);
@@ -272,72 +278,35 @@ using MathNet.Numerics.LinearAlgebra;
         )
         .Add(AreaRestriction.CreateRestrictionForAll(construction, 10))
         .Build();
+
     var optimizer = new ConstructionOptimizer(analyzer, gradientFinder);
+    Func<IList<double>, double> targetFunc = analyzer.GenerateMaterialConsumptionFunction(construction);
     Console.WriteLine(
         $"Материалоемкость до оптимизации {analyzer.GenerateMaterialConsumptionFunction(construction)(areas)}");
     IList<double> optimizedAreas = optimizer.Optimize(construction, restrictions, OptimizationOptions.Default);
+
     Console.WriteLine(optimizedAreas);
 
     Console.WriteLine(
-        $"Материалоемкость после оптимизации {analyzer.GenerateMaterialConsumptionFunction(construction)(optimizedAreas)}"
+        $"Материалоемкость после оптимизации {targetFunc(optimizedAreas)}"
     );
+
+    Console.WriteLine($"Эффективность до подбора: {optimizer.GetEfficiency(targetFunc, areas, optimizedAreas)}");
+
+    var sectionSearcher = new SectionSearcher();
+    List<List<double>> discreteAreasCombinations =
+        sectionSearcher.SelectDiscretelyAllCombinations(optimizedAreas, Section.GetTubeSections(), restrictions);
+    Console.WriteLine("Оптимальные значения после подбора");
+    List<double> optimal = sectionSearcher.SelectOptimalSet(analyzer.GenerateMaterialConsumptionFunction(construction),
+        discreteAreasCombinations);
+    foreach (var op in optimal)
+    {
+        Console.WriteLine(op);
+    }
+
+    Console.WriteLine($"Эффективность после подбора: {optimizer.GetEfficiency(targetFunc, areas, optimal)}");
 }
 
-{
-    // var node1 = new Node(0, 600);
-    // var node2 = new Node(400, 600);
-    // var node3 = new Node(400, 0);
-    // var node4 = new Node(600, 200);
-    // var node5 = new Node(1000, 0);
-    //
-    // var element1 = new Element(node1, node2, 2_000_000, 10);
-    // var element2 = new Element(node2, node3, 2_000_000, 10);
-    // var element3 = new Element(node2, node4, 2_000_000, 10);
-    // var element4 = new Element(node3, node4, 2_000_000, 10);
-    // var element5 = new Element(node3, node5, 2_000_000, 10);
-    // var element6 = new Element(node4, node5, 2_000_000, 10);
-    //
-    // var load = new ConcentratedLoad(0, -10_000);
-    //
-    // var uv = new Constraint(true, true);
-    //
-    //
-    // var constructionBuilder = new ConstructionBuilder();
-    //
-    // var construction = constructionBuilder
-    //     .AddNode(node1)
-    //     .AddNode(node2)
-    //     .AddNode(node3)
-    //     .AddNode(node4)
-    //     .AddNode(node5)
-    //     .AddElement(element1)
-    //     .AddElement(element2)
-    //     .AddElement(element3)
-    //     .AddElement(element4)
-    //     .AddElement(element5)
-    //     .AddElement(element6)
-    //     .AddLoad(node5, load)
-    //     .AddConstraint(node1, uv)
-    //     .AddConstraint(node3, uv)
-    //     .Build();
-    //
-    // var matrixBuilder = new MatrixBuilder2D();
-    // var analyzer = new ConstructionAnalyzer(matrixBuilder);
-    // Func<IList<double>, double> nodeDisplacementFunc =
-    //     analyzer.GenerateNodeDisplacementOnAreasFunction(construction, node5, Axis.Y);
-    // Vector<double> displacement = analyzer.FindDisplacementVector(construction);
-    // Console.WriteLine(displacement);
-    // var optimizer = new ConstructionOptimizer(analyzer, new GradientFinder(new DerivativeFinder()));
-    // var restrictionBuilder = new RestrictionBuilder();
-    // List<OptimizationRestriction> restrictions = restrictionBuilder
-    //     .Add(new NodeDisplacementRestriction(nodeDisplacementFunc,
-    //             Math.Abs(nodeDisplacementFunc(analyzer.GetAreasVector(construction)))
-    //         )
-    //     )
-    //     .Add(AreaRestriction.CreateRestrictionForAll(construction, 7))
-    //     .Build();
-    // optimizer.Optimize(construction, restrictions, OptimizationOptions.Default);
-}
 
 // TODO FluentConstructionAnalyzer
 
@@ -382,13 +351,13 @@ using MathNet.Numerics.LinearAlgebra;
 //         .Build();
 //
 //
-//     ConstructionDto constructionDto = ConstructionDto.FromModel(construction);
-//     var serializer = new ConstructionSerializer();
+// ConstructionDto constructionDto = ConstructionDto.FromModel(construction);
+// var serializer = new ConstructionSerializer();
 //
-//     string json = serializer.Serialize(constructionDto);
-//     Console.WriteLine(json);
+// string json = serializer.Serialize(constructionDto);
+// Console.WriteLine(json);
 //
-//     ConstructionDto deserializedConstruction = serializer.Deserialize(json);
+// ConstructionDto deserializedConstruction = serializer.Deserialize(json);
 //     ConstructionModel newConstruction = deserializedConstruction.ToModel(new ConstructionBuilder());
 //     // var newSerializer = new NewConstructionSerializer();
 //     // string newJson = newSerializer.Serialize(construction);
