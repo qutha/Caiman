@@ -1,24 +1,18 @@
-using Caiman.Core.Analysis;
 using Caiman.Core.Construction;
-using Caiman.Core.Optimization.Restrictions;
 using Caiman.Editor.Interfaces;
 using ImGuiNET;
 
 namespace Caiman.Editor.Construction.Restrictions;
 
 public class ConstructionRestrictionsWindow(
-    RestrictionsState restrictionsState,
     EditorConstruction editorConstruction,
-    ConstructionAnalyzer analyzer,
-    ConstructionManager constructionManager)
+    RestrictionsState state)
     : IGuiRender
 {
     private readonly AreaRestrictionState _areaRestrictionState = new();
+    private readonly NodeDisplacementRestrictionState _nodeDisplacementRestrictionState = new();
     private Axis _axis = Axis.X;
-    private Core.Construction.Construction _construction;
-    private double _maxDisplacement;
-    private double _minAreaForAll;
-    private int _nodeId;
+    private double _minForAll;
 
     public bool IsOpen;
 
@@ -34,7 +28,6 @@ public class ConstructionRestrictionsWindow(
 
         if (ImGui.Begin("Set Restrictions", ref IsOpen))
         {
-            _construction = constructionManager.ToConstruction(editorConstruction);
             if (ImGui.Button("Add Restriction"))
             {
                 ImGui.OpenPopup("Restriction Type");
@@ -48,55 +41,78 @@ public class ConstructionRestrictionsWindow(
                 ImGui.PushID("Area Restriction");
                 if (ImGui.Button("Add"))
                 {
-                    restrictionsState.Restrictions.Add(new AreaRestriction(_areaRestrictionState.ElementId,
-                        _areaRestrictionState.MinArea));
+                    state.AreaRestrictionStates.Add(new AreaRestrictionState
+                    {
+                        ElementId = _areaRestrictionState.ElementId,
+                        MinArea = _areaRestrictionState.MinArea,
+                    });
                 }
 
                 ImGui.SeparatorText("Areas Restriction");
-                ImGui.InputDouble("Min Area For All", ref _minAreaForAll);
+                ImGui.InputDouble("Min Area For All", ref _minForAll);
                 ImGui.PushID("Areas Restriction");
                 if (ImGui.Button("Add"))
                 {
-                    restrictionsState.Restrictions.RemoveAll(r => r is AreaRestriction);
-                    restrictionsState.Restrictions.AddRange(
-                        AreaRestriction.CreateRestrictionForAll(_construction, _minAreaForAll));
+                    state.AreaRestrictionStates.Clear();
+                    state.AreaRestrictionStates.AddRange(editorConstruction.Elements.Select(el =>
+                        new AreaRestrictionState
+                        {
+                            ElementId = el.Id,
+                            MinArea = _minForAll,
+                        }));
                 }
 
                 ImGui.SeparatorText("Node Displacement");
-                ImGui.InputInt("Node Id", ref _nodeId);
-                ImGui.InputDouble("Max Displacement", ref _maxDisplacement);
-                // ImGui.RadioButton("Max Displacement", ref _maxDisplacement);
+                ImGui.InputInt("Node Id", ref _nodeDisplacementRestrictionState.NodeId);
+                ImGui.InputDouble("Max Displacement", ref _nodeDisplacementRestrictionState.MaxDisplacement);
+                if (ImGui.RadioButton("X Axis", _axis == Axis.X))
+                {
+                    _axis = Axis.X;
+                }
+
+                ImGui.SameLine();
+                if (ImGui.RadioButton("Y Axis", _axis == Axis.Y))
+                {
+                    _axis = Axis.Y;
+                }
+
                 ImGui.PushID("Node Displacement Restriction");
                 if (ImGui.Button("Add"))
                 {
-                    Func<IList<double>, double> func = analyzer.GenerateNodeDisplacementOnAreasFunction(_construction,
-                        _construction.Nodes[_nodeId], Axis.Y);
-                    restrictionsState.Restrictions.Add(new NodeDisplacementRestriction(null, _maxDisplacement));
+                    state.NodeDisplacementRestrictionStates.Add(new NodeDisplacementRestrictionState
+                    {
+                        NodeId = _nodeDisplacementRestrictionState.NodeId,
+                        MaxDisplacement = _nodeDisplacementRestrictionState.MaxDisplacement,
+                        Axis = _axis,
+                    });
                 }
 
                 ImGui.EndPopup();
             }
 
             ImGui.SeparatorText("Restrictions");
-            foreach (var restriction in restrictionsState.Restrictions)
+            foreach (var restriction in state.NodeDisplacementRestrictionStates.ToList())
             {
                 ImGui.Text(restriction.ToString());
                 ImGui.PushID(restriction.ToString());
-                if (ImGui.Button("Remove")) { }
+                if (ImGui.Button("Remove"))
+                {
+                    state.NodeDisplacementRestrictionStates.Remove(restriction);
+                }
+            }
+
+            foreach (var restriction in state.AreaRestrictionStates.ToList())
+            {
+                ImGui.Text(restriction.ToString());
+                ImGui.PushID(restriction.ToString());
+                if (ImGui.Button("Remove"))
+                {
+                    state.AreaRestrictionStates.Remove(restriction);
+                }
             }
 
             ImGui.End();
         }
-    }
-
-    #endregion
-
-    #region Nested type: AreaRestrictionState
-
-    private class AreaRestrictionState
-    {
-        public int ElementId;
-        public double MinArea;
     }
 
     #endregion

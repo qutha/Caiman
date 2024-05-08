@@ -1,12 +1,12 @@
 using System.Diagnostics;
 using System.Numerics;
+using Caiman.Core.Construction;
 using Caiman.Editor;
 using Caiman.Editor.Camera;
 using Caiman.Editor.Commands;
 using Caiman.Editor.Construction;
 using Caiman.Editor.Construction.Commands;
 using Caiman.Editor.Construction.Restrictions;
-using Caiman.Editor.ConstructionOptions;
 using Caiman.Editor.Diagnostics;
 using Caiman.Editor.Explorer;
 using Caiman.Editor.Extensions;
@@ -23,6 +23,7 @@ Trace.Listeners.Add(new ConsoleTraceListener());
 
 var serviceProvider = ConfigureServices();
 #if DEBUG
+
 var construction = serviceProvider.GetRequiredService<EditorConstruction>();
 var commandManager = serviceProvider.GetRequiredService<CommandManager>();
 commandManager.Push(new AddNodeCommand(construction, new Vector2(0, 700)));
@@ -40,6 +41,22 @@ commandManager.Push(new AddElementCommand(construction, 3, 1, elasticity, area))
 commandManager.Push(new AddLoadCommand(construction, 1, new Vector2(10_000, 0)));
 commandManager.Push(new AddConstraintCommand(construction, 2, false, true));
 commandManager.Push(new AddConstraintCommand(construction, 3, true, true));
+
+var restrictionsState = serviceProvider.GetRequiredService<RestrictionsState>();
+restrictionsState.AreaRestrictionStates.AddRange(construction.Elements.Select(el =>
+    new AreaRestrictionState
+    {
+        ElementId = el.Id,
+        MinArea = 10,
+    }));
+restrictionsState.NodeDisplacementRestrictionStates.Add(new NodeDisplacementRestrictionState
+{
+    NodeId = 1,
+    MaxDisplacement = 0.5722201688825613,
+    Axis = Axis.X,
+});
+
+
 // commandManager.Push(new AddNodeCommand(construction, Vector2.Zero));
 // commandManager.Push(new AddNodeCommand(construction, new Vector2(1000, 0)));
 // commandManager.Push(new AddNodeCommand(construction, new Vector2(1000, 1000)));
@@ -74,7 +91,6 @@ ServiceProvider ConfigureServices()
         .AddSingleton<ExplorerController>()
         .AddSingleton<ICommandManager>(provider => provider.GetRequiredService<CommandManager>())
         .AddSingleton<IMenu, ConstructionMenu>()
-        .AddSingleton<IMenu, ConstructionOptionsMenu>()
         .AddSingleton<IMenu, DiagnosticsMenu>()
         .AddSingleton<ConstructionRestrictionsWindow>()
         .AddSingleton<DiagnosticsWindow>()

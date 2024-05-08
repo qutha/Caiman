@@ -22,6 +22,35 @@ public class ConstructionMenu(
                 restrictionsWindow.IsOpen = !restrictionsWindow.IsOpen;
             }
 
+            if (ImGui.MenuItem("Internal Forces"))
+            {
+                _ = Task.Run(() =>
+                {
+                    console.WriteLine("Internal forces...");
+                    var clock = new Stopwatch();
+                    clock.Start();
+                    var result = constructionManager.FindInternalForces();
+                    clock.Stop();
+                    calculationResults.Write(result);
+                    console.WriteLine($"Internal forces task done in {clock.ElapsedMilliseconds}ms");
+                });
+            }
+
+            if (ImGui.MenuItem("Stresses"))
+            {
+                _ = Task.Run(() =>
+                {
+                    console.WriteLine("Stresses...");
+                    var clock = new Stopwatch();
+                    clock.Start();
+                    var result = constructionManager.FindStresses();
+                    clock.Stop();
+                    calculationResults.Write(result);
+                    console.WriteLine($"Stresses task done in {clock.ElapsedMilliseconds}ms");
+                });
+            }
+
+
             if (ImGui.MenuItem("Nodal displacement"))
             {
                 _ = Task.Run(() =>

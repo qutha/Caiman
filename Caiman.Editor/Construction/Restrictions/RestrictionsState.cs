@@ -1,8 +1,7 @@
-using Caiman.Core.Optimization.Restrictions;
-
 namespace Caiman.Editor.Construction.Restrictions;
 
 public class RestrictionsState
 {
-    public List<OptimizationRestriction> Restrictions { get; set; } = new();
+    public List<NodeDisplacementRestrictionState> NodeDisplacementRestrictionStates { get; set; } = new();
+    public List<AreaRestrictionState> AreaRestrictionStates { get; set; } = new();
 }
